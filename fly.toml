@@ -21,3 +21,4 @@ primary_region = "jnb"
   memory = "512mb"
   cpu_kind = "shared"
   cpus = 1
+
