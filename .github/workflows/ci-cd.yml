@@ -1,0 +1,55 @@
+name: Backend CI/CD (.NET 8 & Fly.io)
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    name: Build & Validate (.NET 8.0)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Configurar .NET 8.0
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restaurar dependências
+        run: dotnet restore RedeRestaurante.API.csproj
+
+      - name: Compilar (Release)
+        run: dotnet build RedeRestaurante.API.csproj --configuration Release --no-restore
+
+      - name: Publicar artefacto
+        run: dotnet publish RedeRestaurante.API.csproj -c Release -o ./publish --no-build
+
+  deploy-fly:
+    name: Deploy Automático (Fly.io)
+    needs: build-and-test
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    runs-on: ubuntu-latest
+    concurrency:
+      group: fly-deploy-backend
+      cancel-in-progress: false
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Configurar Flyctl
+        uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Deploy no Fly.io (se FLY_API_TOKEN estiver configurado)
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+        run: |
+          if [ -n "$FLY_API_TOKEN" ]; then
+            flyctl deploy --remote-only
+          else
+            echo "Aviso: Secret FLY_API_TOKEN não configurado no GitHub. O deploy automático pode ser feito pela integração GitHub do painel Fly.io ou adicionando FLY_API_TOKEN em Settings > Secrets."
+          fi
