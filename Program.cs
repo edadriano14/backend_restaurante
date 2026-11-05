@@ -7,10 +7,33 @@ using RedeRestaurante.API.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Carregar variáveis do ficheiro .env local (se existir) para conectar ao Supabase e Frontend
+var envFilePath = Path.Combine(builder.Environment.ContentRootPath, ".env");
+if (File.Exists(envFilePath))
+{
+    foreach (var line in File.ReadAllLines(envFilePath))
+    {
+        var trimmed = line.Trim();
+        if (string.IsNullOrEmpty(trimmed) || trimmed.StartsWith('#')) continue;
+        var idx = trimmed.IndexOf('=');
+        if (idx <= 0) continue;
+        var key = trimmed[..idx].Trim();
+        var val = trimmed[(idx + 1)..].Trim().Trim('"', '\'');
+        if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable(key)))
+        {
+            Environment.SetEnvironmentVariable(key, val);
+        }
+    }
+    builder.Configuration.AddEnvironmentVariables();
+}
+
 // Adicionar Controladores e CORS
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+var frontendOrigins = (builder.Configuration["Frontend:Url"] ?? Environment.GetEnvironmentVariable("FRONTEND_URL") ?? "")
+    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
 builder.Services.AddCors(options =>
 {
@@ -26,8 +49,10 @@ builder.Services.AddCors(options =>
 builder.Services.AddScoped<ITenantService, TenantService>();
 
 // Conexão PostgreSQL (Supabase)
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") 
-    ?? "Host=localhost;Port=5432;Database=rede_restaurantes;Username=postgres;Password=postgres";
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? Environment.GetEnvironmentVariable("DATABASE_URL")
+    ?? Environment.GetEnvironmentVariable("SUPABASE_DB_CONNECTION")
+    ?? "Host=aws-0-eu-central-1.pooler.supabase.com;Port=6543;Database=postgres;Username=postgres.zkabrymvsdvvaprvhiac;Password=MnQzdnQybjJqZXBpbHk1em5lNm9saHY3b29maGd5ZzM;SSL Mode=Require;Trust Server Certificate=true;Pooling=true";
 
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
@@ -69,11 +94,31 @@ app.MapGet("/", () => Results.Ok(new
 {
     status = "online",
     servico = "Rede de Restaurantes Multi-Tenant API (.NET 8)",
+    supabaseUrl = builder.Configuration["Supabase:Url"] ?? Environment.GetEnvironmentVariable("SUPABASE_URL") ?? "https://zkabrymvsdvvaprvhiac.supabase.co",
+    frontendUrl = builder.Configuration["Frontend:Url"] ?? Environment.GetEnvironmentVariable("FRONTEND_URL") ?? "https://frontend-restaurante.fly.dev",
     documentacao = "/swagger",
     health = "/health"
 }));
 
-app.MapGet("/health", () => Results.Ok(new { status = "healthy", timestamp = DateTime.UtcNow }));
+app.MapGet("/health", async (AppDbContext db) =>
+{
+    bool dbConnected = false;
+    try
+    {
+        dbConnected = await db.Database.CanConnectAsync();
+    }
+    catch
+    {
+        dbConnected = false;
+    }
+    return Results.Ok(new
+    {
+        status = "healthy",
+        databaseConnected = dbConnected,
+        supabaseProject = "zkabrymvsdvvaprvhiac",
+        timestamp = DateTime.UtcNow
+    });
+});
 
 app.MapControllers();
 

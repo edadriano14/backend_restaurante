@@ -77,6 +77,9 @@ public class Estabelecimento
     [Column("descricao_rodape")]
     public string? DescricaoRodape { get; set; }
 
+    [Column("tem_piscina")]
+    public bool TemPiscina { get; set; } = false;
+
     [Column("ativo")]
     public bool Ativo { get; set; } = true;
 
@@ -132,6 +135,9 @@ public class Utilizador
     [Key]
     [Column("id")]
     public Guid Id { get; set; } = Guid.NewGuid();
+
+    [Column("auth_user_id")]
+    public Guid? AuthUserId { get; set; }
 
     [Column("estabelecimento_id")]
     public Guid EstabelecimentoId { get; set; }

@@ -12,13 +12,19 @@ primary_region = 'fra'
 [env]
   ASPNETCORE_ENVIRONMENT = 'Production'
   PORT = '8080'
+  SUPABASE_URL = 'https://zkabrymvsdvvaprvhiac.supabase.co'
+  SUPABASE_ANON_KEY = 'sb_publishable_j_ICaOPdvpPmikrqaflrfg_bN_hAdEH'
+  SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_j_ICaOPdvpPmikrqaflrfg_bN_hAdEH'
+  FRONTEND_URL = 'https://frontend-restaurante.fly.dev,http://localhost:8000,http://localhost:8070'
+  Jwt__Issuer = 'RedeRestaurante'
+  Jwt__Audience = 'RedeRestauranteApp'
 
 [http_service]
   internal_port = 8080
   force_https = true
   auto_stop_machines = 'stop'
   auto_start_machines = true
-  min_machines_running = 0
+  min_machines_running = 1
   processes = ['app']
 
 [[vm]]
