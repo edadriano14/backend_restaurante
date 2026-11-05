@@ -53,3 +53,4 @@ jobs:
           else
             echo "Aviso: Secret FLY_API_TOKEN não configurado no GitHub. O deploy automático pode ser feito pela integração GitHub do painel Fly.io ou adicionando FLY_API_TOKEN em Settings > Secrets."
           fi
+
