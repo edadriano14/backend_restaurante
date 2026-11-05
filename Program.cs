@@ -1,4 +1,4 @@
-﻿using System.Text;
+using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -51,17 +51,29 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
+// Habilitar Swagger em todos os ambientes (incluindo Produção no Fly.io)
+app.UseSwagger();
+app.UseSwaggerUI(c =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Rede de Restaurantes Multi-Tenant API v1");
+});
 
 app.UseCors("AllowAll");
 
 app.UseAuthentication();
 app.UseMiddleware<TenantMiddleware>();
 app.UseAuthorization();
+
+// Rotas de Raiz e Healthcheck (evita HTTP 404 na raiz https://backend-restaurante.fly.dev/)
+app.MapGet("/", () => Results.Ok(new
+{
+    status = "online",
+    servico = "Rede de Restaurantes Multi-Tenant API (.NET 8)",
+    documentacao = "/swagger",
+    health = "/health"
+}));
+
+app.MapGet("/health", () => Results.Ok(new { status = "healthy", timestamp = DateTime.UtcNow }));
 
 app.MapControllers();
 
