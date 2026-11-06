@@ -116,6 +116,6 @@ public class AppDbContext : DbContext
             .HasQueryFilter(e => _tenantService.EstabelecimentoId == null || e.EstabelecimentoId == _tenantService.EstabelecimentoId);
 
         modelBuilder.Entity<TaxaIva>()
-            .HasQueryFilter(e => !_tenantService.EstabelecimentoId.HasValue || e.EstabelecimentoId == _tenantService.EstabelecimentoId.Value);
+            .HasQueryFilter(e => _tenantService.EstabelecimentoId == null || e.EstabelecimentoId == _tenantService.EstabelecimentoId);
     }
 }

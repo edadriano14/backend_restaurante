@@ -235,7 +235,7 @@ public class SyncStateController : ControllerBase
                 {
                     id = t.Id.ToString(),
                     codigo = t.Codigo,
-                    iva = t.Iva,
+                    iva = t.Iva ?? 16.00m,
                     moeda = t.Moeda,
                     descricao = t.Descricao,
                     ativo = t.Ativo,

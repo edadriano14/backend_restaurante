@@ -595,7 +595,7 @@ public class TaxaIva
     public Guid Id { get; set; } = Guid.NewGuid();
 
     [Column("estabelecimento_id")]
-    public Guid EstabelecimentoId { get; set; }
+    public Guid? EstabelecimentoId { get; set; }
 
     [Required]
     [MaxLength(50)]
@@ -603,7 +603,7 @@ public class TaxaIva
     public string Codigo { get; set; } = string.Empty;
 
     [Column("iva")]
-    public decimal Iva { get; set; } = 16.00m;
+    public decimal? Iva { get; set; } = 16.00m;
 
     [Required]
     [MaxLength(10)]
