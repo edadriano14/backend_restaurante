@@ -50,69 +50,70 @@ public class AppDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
-        // ISOLAMENTO MULTI-TENANT AUTOMÁTICO COM AVALIAÇÃO SEGURA
+        // ISOLAMENTO MULTI-TENANT AUTOMÁTICO
+        // Quando EstabelecimentoId for null (acesso global ou sem tenant especificado), não filtra por tenant
         modelBuilder.Entity<Utilizador>()
-            .HasQueryFilter(e => !_tenantService.EstabelecimentoId.HasValue || (_tenantService.EstabelecimentoId != null && e.EstabelecimentoId == _tenantService.EstabelecimentoId.Value));
+            .HasQueryFilter(e => _tenantService.EstabelecimentoId == null || e.EstabelecimentoId == _tenantService.EstabelecimentoId);
 
         modelBuilder.Entity<Fornecedor>()
-            .HasQueryFilter(e => !_tenantService.EstabelecimentoId.HasValue || (_tenantService.EstabelecimentoId != null && e.EstabelecimentoId == _tenantService.EstabelecimentoId.Value));
+            .HasQueryFilter(e => _tenantService.EstabelecimentoId == null || e.EstabelecimentoId == _tenantService.EstabelecimentoId);
 
         modelBuilder.Entity<CategoriaStock>()
-            .HasQueryFilter(e => !_tenantService.EstabelecimentoId.HasValue || (_tenantService.EstabelecimentoId != null && e.EstabelecimentoId == _tenantService.EstabelecimentoId.Value));
+            .HasQueryFilter(e => _tenantService.EstabelecimentoId == null || e.EstabelecimentoId == _tenantService.EstabelecimentoId);
 
         modelBuilder.Entity<ItemStock>()
-            .HasQueryFilter(e => !_tenantService.EstabelecimentoId.HasValue || (_tenantService.EstabelecimentoId != null && e.EstabelecimentoId == _tenantService.EstabelecimentoId.Value));
+            .HasQueryFilter(e => _tenantService.EstabelecimentoId == null || e.EstabelecimentoId == _tenantService.EstabelecimentoId);
 
         modelBuilder.Entity<Compra>()
-            .HasQueryFilter(e => !_tenantService.EstabelecimentoId.HasValue || (_tenantService.EstabelecimentoId != null && e.EstabelecimentoId == _tenantService.EstabelecimentoId.Value));
+            .HasQueryFilter(e => _tenantService.EstabelecimentoId == null || e.EstabelecimentoId == _tenantService.EstabelecimentoId);
 
         modelBuilder.Entity<Cliente>()
-            .HasQueryFilter(e => !_tenantService.EstabelecimentoId.HasValue || (_tenantService.EstabelecimentoId != null && e.EstabelecimentoId == _tenantService.EstabelecimentoId.Value));
+            .HasQueryFilter(e => _tenantService.EstabelecimentoId == null || e.EstabelecimentoId == _tenantService.EstabelecimentoId);
 
         modelBuilder.Entity<Categoria>()
-            .HasQueryFilter(e => !_tenantService.EstabelecimentoId.HasValue || (_tenantService.EstabelecimentoId != null && e.EstabelecimentoId == _tenantService.EstabelecimentoId.Value));
+            .HasQueryFilter(e => _tenantService.EstabelecimentoId == null || e.EstabelecimentoId == _tenantService.EstabelecimentoId);
 
         modelBuilder.Entity<Produto>()
-            .HasQueryFilter(e => !_tenantService.EstabelecimentoId.HasValue || (_tenantService.EstabelecimentoId != null && e.EstabelecimentoId == _tenantService.EstabelecimentoId.Value));
+            .HasQueryFilter(e => _tenantService.EstabelecimentoId == null || e.EstabelecimentoId == _tenantService.EstabelecimentoId);
 
         modelBuilder.Entity<CaixaSessao>()
-            .HasQueryFilter(e => !_tenantService.EstabelecimentoId.HasValue || (_tenantService.EstabelecimentoId != null && e.EstabelecimentoId == _tenantService.EstabelecimentoId.Value));
+            .HasQueryFilter(e => _tenantService.EstabelecimentoId == null || e.EstabelecimentoId == _tenantService.EstabelecimentoId);
 
         modelBuilder.Entity<PedidoVenda>()
-            .HasQueryFilter(e => !_tenantService.EstabelecimentoId.HasValue || (_tenantService.EstabelecimentoId != null && e.EstabelecimentoId == _tenantService.EstabelecimentoId.Value));
+            .HasQueryFilter(e => _tenantService.EstabelecimentoId == null || e.EstabelecimentoId == _tenantService.EstabelecimentoId);
 
         modelBuilder.Entity<GuiaEntrada>()
-            .HasQueryFilter(e => !_tenantService.EstabelecimentoId.HasValue || (_tenantService.EstabelecimentoId != null && e.EstabelecimentoId == _tenantService.EstabelecimentoId.Value));
+            .HasQueryFilter(e => _tenantService.EstabelecimentoId == null || e.EstabelecimentoId == _tenantService.EstabelecimentoId);
 
         modelBuilder.Entity<UnidadeMedida>()
-            .HasQueryFilter(e => !_tenantService.EstabelecimentoId.HasValue || (_tenantService.EstabelecimentoId != null && e.EstabelecimentoId == _tenantService.EstabelecimentoId.Value));
+            .HasQueryFilter(e => _tenantService.EstabelecimentoId == null || e.EstabelecimentoId == _tenantService.EstabelecimentoId);
 
         modelBuilder.Entity<Armazem>()
-            .HasQueryFilter(e => !_tenantService.EstabelecimentoId.HasValue || (_tenantService.EstabelecimentoId != null && e.EstabelecimentoId == _tenantService.EstabelecimentoId.Value));
+            .HasQueryFilter(e => _tenantService.EstabelecimentoId == null || e.EstabelecimentoId == _tenantService.EstabelecimentoId);
 
         modelBuilder.Entity<MetodoPagamento>()
-            .HasQueryFilter(e => !_tenantService.EstabelecimentoId.HasValue || (_tenantService.EstabelecimentoId != null && e.EstabelecimentoId == _tenantService.EstabelecimentoId.Value));
+            .HasQueryFilter(e => _tenantService.EstabelecimentoId == null || e.EstabelecimentoId == _tenantService.EstabelecimentoId);
 
         modelBuilder.Entity<Acompanhamento>()
-            .HasQueryFilter(e => !_tenantService.EstabelecimentoId.HasValue || (_tenantService.EstabelecimentoId != null && e.EstabelecimentoId == _tenantService.EstabelecimentoId.Value));
+            .HasQueryFilter(e => _tenantService.EstabelecimentoId == null || e.EstabelecimentoId == _tenantService.EstabelecimentoId);
 
         modelBuilder.Entity<PostoPreparacao>()
-            .HasQueryFilter(e => !_tenantService.EstabelecimentoId.HasValue || (_tenantService.EstabelecimentoId != null && e.EstabelecimentoId == _tenantService.EstabelecimentoId.Value));
+            .HasQueryFilter(e => _tenantService.EstabelecimentoId == null || e.EstabelecimentoId == _tenantService.EstabelecimentoId);
 
         modelBuilder.Entity<TipoPedido>()
-            .HasQueryFilter(e => !_tenantService.EstabelecimentoId.HasValue || (_tenantService.EstabelecimentoId != null && e.EstabelecimentoId == _tenantService.EstabelecimentoId.Value));
+            .HasQueryFilter(e => _tenantService.EstabelecimentoId == null || e.EstabelecimentoId == _tenantService.EstabelecimentoId);
 
         modelBuilder.Entity<Sala>()
-            .HasQueryFilter(e => !_tenantService.EstabelecimentoId.HasValue || (_tenantService.EstabelecimentoId != null && e.EstabelecimentoId == _tenantService.EstabelecimentoId.Value));
+            .HasQueryFilter(e => _tenantService.EstabelecimentoId == null || e.EstabelecimentoId == _tenantService.EstabelecimentoId);
 
         modelBuilder.Entity<Mesa>()
-            .HasQueryFilter(e => !_tenantService.EstabelecimentoId.HasValue || (_tenantService.EstabelecimentoId != null && e.EstabelecimentoId == _tenantService.EstabelecimentoId.Value));
+            .HasQueryFilter(e => _tenantService.EstabelecimentoId == null || e.EstabelecimentoId == _tenantService.EstabelecimentoId);
 
         modelBuilder.Entity<CanalPagamento>()
-            .HasQueryFilter(e => !_tenantService.EstabelecimentoId.HasValue || (_tenantService.EstabelecimentoId != null && e.EstabelecimentoId == _tenantService.EstabelecimentoId.Value));
+            .HasQueryFilter(e => _tenantService.EstabelecimentoId == null || e.EstabelecimentoId == _tenantService.EstabelecimentoId);
 
         modelBuilder.Entity<PedidoOnline>()
-            .HasQueryFilter(e => !_tenantService.EstabelecimentoId.HasValue || (_tenantService.EstabelecimentoId != null && e.EstabelecimentoId == _tenantService.EstabelecimentoId.Value));
+            .HasQueryFilter(e => _tenantService.EstabelecimentoId == null || e.EstabelecimentoId == _tenantService.EstabelecimentoId);
 
         modelBuilder.Entity<TaxaIva>()
             .HasQueryFilter(e => !_tenantService.EstabelecimentoId.HasValue || e.EstabelecimentoId == _tenantService.EstabelecimentoId.Value);
