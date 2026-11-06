@@ -15,19 +15,19 @@ jobs:
       - name: Checkout código
         uses: actions/checkout@v4
 
-      - name: Configurar .NET 8.0
+      - name: Configurar .NET 8.0 SDK
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
 
       - name: Restaurar dependências
-        run: dotnet restore RedeRestaurante.API.csproj
+        run: dotnet restore RedeRestaurante.API.csproj --verbosity normal
 
       - name: Compilar (Release)
-        run: dotnet build RedeRestaurante.API.csproj --configuration Release --no-restore
+        run: dotnet build RedeRestaurante.API.csproj --configuration Release -v normal
 
       - name: Publicar artefacto
-        run: dotnet publish RedeRestaurante.API.csproj -c Release -o ./publish --no-build
+        run: dotnet publish RedeRestaurante.API.csproj -c Release -o ./publish /p:UseAppHost=false
 
   deploy-fly:
     name: Deploy Automático (Fly.io)
@@ -49,8 +49,7 @@ jobs:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
         run: |
           if [ -n "$FLY_API_TOKEN" ]; then
-            flyctl deploy --remote-only
+            flyctl deploy --remote-only --depot=false
           else
-            echo "Aviso: Secret FLY_API_TOKEN não configurado no GitHub. O deploy automático pode ser feito pela integração GitHub do painel Fly.io ou adicionando FLY_API_TOKEN em Settings > Secrets."
+            echo "Aviso: Secret FLY_API_TOKEN não configurado no GitHub. O deploy pode ser executado via CLI local ou configurando FLY_API_TOKEN no GitHub Secrets."
           fi
-
