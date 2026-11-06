@@ -49,10 +49,49 @@ builder.Services.AddCors(options =>
 builder.Services.AddScoped<ITenantService, TenantService>();
 
 // Conexão PostgreSQL (Supabase)
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+// Suporta tanto formato ADO.NET Npgsql ("Host=...;Port=...") como formato URI ("postgresql://user:pass@host:port/db")
+string ParsePostgresConnectionString(string raw)
+{
+    if (string.IsNullOrWhiteSpace(raw)) return raw;
+    raw = raw.Trim();
+    if (!raw.StartsWith("postgresql://", StringComparison.OrdinalIgnoreCase) &&
+        !raw.StartsWith("postgres://", StringComparison.OrdinalIgnoreCase))
+    {
+        return raw;
+    }
+
+    try
+    {
+        var uri = new Uri(raw);
+        var userInfo = uri.UserInfo;
+        var user = userInfo;
+        var pass = "";
+        if (userInfo.Contains(':'))
+        {
+            var parts = userInfo.Split(':', 2);
+            user = Uri.UnescapeDataString(parts[0]);
+            pass = Uri.UnescapeDataString(parts[1]);
+        }
+        var host = uri.Host;
+        var port = uri.Port > 0 ? uri.Port : 5432;
+        var db = uri.AbsolutePath.TrimStart('/');
+        if (string.IsNullOrEmpty(db)) db = "postgres";
+
+        return $"Host={host};Port={port};Database={db};Username={user};Password={pass};SSL Mode=Require;Trust Server Certificate=true;Pooling=true";
+    }
+    catch
+    {
+        return raw;
+    }
+}
+
+var rawConn = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? Environment.GetEnvironmentVariable("DATABASE_URL")
     ?? Environment.GetEnvironmentVariable("SUPABASE_DB_CONNECTION")
-    ?? "Host=aws-0-eu-central-1.pooler.supabase.com;Port=6543;Database=postgres;Username=postgres.zkabrymvsdvvaprvhiac;Password=MnQzdnQybjJqZXBpbHk1em5lNm9saHY3b29maGd5ZzM;SSL Mode=Require;Trust Server Certificate=true;Pooling=true";
+    ?? Environment.GetEnvironmentVariable("SUPABASE_URL")
+    ?? "Host=aws-1-eu-central-1.pooler.supabase.com;Port=5432;Database=postgres;Username=postgres.cappkkjgrgjlowqzewww;Password=Maida1996@1991;SSL Mode=Require;Trust Server Certificate=true;Pooling=true";
+
+var connectionString = ParsePostgresConnectionString(rawConn);
 
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
