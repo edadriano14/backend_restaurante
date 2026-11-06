@@ -73,6 +73,58 @@ public class SyncStateController : ControllerBase
             }
 
             var utilizadores = await _context.Utilizadores.AsNoTracking().ToListAsync();
+            if (!utilizadores.Any())
+            {
+                var estId = estabelecimentos.FirstOrDefault()?.Id ?? ToGuid("1", "est");
+                var uAdmin = new Utilizador
+                {
+                    Id = ToGuid("1", "usr"),
+                    EstabelecimentoId = estId,
+                    Nome = "Administrador Geral",
+                    Email = "admin@restaurante.com",
+                    Perfil = "ADMIN_GERAL",
+                    SenhaHash = "AQAAAAEAACcQAAAAEJ...", // placeholder
+                    Ativo = true,
+                    CreatedAt = DateTime.UtcNow
+                };
+                var uGestor = new Utilizador
+                {
+                    Id = ToGuid("2", "usr"),
+                    EstabelecimentoId = estId,
+                    Nome = "Gestor do Restaurante",
+                    Email = "gestor@saborbrasa.com",
+                    Perfil = "GESTOR",
+                    SenhaHash = "AQAAAAEAACcQAAAAEJ...",
+                    Ativo = true,
+                    CreatedAt = DateTime.UtcNow
+                };
+                var uCaixa = new Utilizador
+                {
+                    Id = ToGuid("3", "usr"),
+                    EstabelecimentoId = estId,
+                    Nome = "Operador de Caixa 01",
+                    Email = "caixa1@saborbrasa.com",
+                    Perfil = "OPERADOR",
+                    SenhaHash = "AQAAAAEAACcQAAAAEJ...",
+                    Ativo = true,
+                    CreatedAt = DateTime.UtcNow
+                };
+                var uStock = new Utilizador
+                {
+                    Id = ToGuid("4", "usr"),
+                    EstabelecimentoId = estId,
+                    Nome = "Fiel de Armazém / Stock",
+                    Email = "stock@saborbrasa.com",
+                    Perfil = "STOCK",
+                    SenhaHash = "AQAAAAEAACcQAAAAEJ...",
+                    Ativo = true,
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                _context.Utilizadores.AddRange(uAdmin, uGestor, uCaixa, uStock);
+                await _context.SaveChangesAsync();
+                utilizadores = await _context.Utilizadores.AsNoTracking().ToListAsync();
+            }
             var fornecedores = await _context.Fornecedores.AsNoTracking().ToListAsync();
             var categorias = await _context.Categorias.AsNoTracking().OrderBy(c => c.Ordem).ToListAsync();
             var produtos = await _context.Produtos.AsNoTracking().ToListAsync();
@@ -547,6 +599,44 @@ public class SyncStateController : ControllerBase
                     if (item.TryGetProperty("icone", out var icone)) dbMet.Icone = icone.GetString() ?? "fa-solid fa-money-bill";
                     if (item.TryGetProperty("permite_troco", out var troco)) dbMet.PermiteTroco = troco.GetBoolean();
                     if (item.TryGetProperty("ativo", out var ativ)) dbMet.Ativo = ativ.GetBoolean();
+                }
+            }
+
+            // Utilizadores
+            if (payload.TryGetProperty("utilizadores", out var usersEl) && usersEl.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var item in usersEl.EnumerateArray())
+                {
+                    var idStr = item.TryGetProperty("id", out var idProp) ? idProp.GetString() : null;
+                    var guid = ToGuid(idStr, "usr");
+                    var dbUser = await _context.Utilizadores.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Id == guid);
+                    if (dbUser == null)
+                    {
+                        var emailStr = item.TryGetProperty("email", out var em) ? em.GetString() : null;
+                        if (!string.IsNullOrWhiteSpace(emailStr))
+                        {
+                            dbUser = await _context.Utilizadores.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Email.ToLower() == emailStr.ToLower());
+                        }
+                    }
+                    if (dbUser == null)
+                    {
+                        dbUser = new Utilizador
+                        {
+                            Id = guid,
+                            EstabelecimentoId = estId,
+                            CreatedAt = DateTime.UtcNow,
+                            SenhaHash = "AQAAAAEAACcQAAAAEJ..."
+                        };
+                        _context.Utilizadores.Add(dbUser);
+                    }
+                    if (item.TryGetProperty("nome", out var nome)) dbUser.Nome = nome.GetString() ?? dbUser.Nome;
+                    if (item.TryGetProperty("email", out var email)) dbUser.Email = email.GetString() ?? dbUser.Email;
+                    if (item.TryGetProperty("perfil", out var perfil)) dbUser.Perfil = perfil.GetString() ?? dbUser.Perfil;
+                    if (item.TryGetProperty("ativo", out var ativ)) dbUser.Ativo = ativ.GetBoolean();
+                    if (item.TryGetProperty("restaurante_id", out var rId) && Guid.TryParse(rId.GetString(), out var rGuid))
+                    {
+                        dbUser.EstabelecimentoId = rGuid;
+                    }
                 }
             }
 
