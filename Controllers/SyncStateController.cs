@@ -1091,6 +1091,69 @@ public class SyncStateController : ControllerBase
                 }
             }
 
+            // Itens de Compra
+            if (payload.TryGetProperty("itens_compra", out var itCmpEl) && itCmpEl.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var item in itCmpEl.EnumerateArray())
+                {
+                    var idStr = item.TryGetProperty("id", out var idProp) ? idProp.GetString() : null;
+                    var guid = ToGuid(idStr, "itcmp");
+                    var dbItCmp = await _context.ItensCompra.FirstOrDefaultAsync(ic => ic.Id == guid);
+                    if (dbItCmp == null)
+                    {
+                        dbItCmp = new ItemCompra { Id = guid };
+                        _context.ItensCompra.Add(dbItCmp);
+                    }
+                    if (item.TryGetProperty("codigo", out var codItCmp)) dbItCmp.Codigo = codItCmp.GetString() ?? ("IC-" + guid.ToString()[..4].ToUpper());
+                    if (item.TryGetProperty("compra_id", out var cmpId) && Guid.TryParse(cmpId.GetString(), out var cmpG)) dbItCmp.CompraId = cmpG;
+                    if (item.TryGetProperty("item_stock_id", out var stkId) && Guid.TryParse(stkId.GetString(), out var stkG)) dbItCmp.ItemStockId = stkG;
+                    if (item.TryGetProperty("quantidade", out var qtdItCmp)) dbItCmp.Quantidade = (decimal)qtdItCmp.GetDouble();
+                    if (item.TryGetProperty("preco_unitario", out var prItCmp)) dbItCmp.PrecoUnitario = (decimal)prItCmp.GetDouble();
+                }
+            }
+
+            // Itens de Guia de Entrada
+            if ((payload.TryGetProperty("itens_guia_entrada", out var itGeEl) || payload.TryGetProperty("itens_guias_entrada", out itGeEl)) && itGeEl.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var item in itGeEl.EnumerateArray())
+                {
+                    var idStr = item.TryGetProperty("id", out var idProp) ? idProp.GetString() : null;
+                    var guid = ToGuid(idStr, "itge");
+                    var dbItGe = await _context.ItensGuiaEntrada.FirstOrDefaultAsync(ig => ig.Id == guid);
+                    if (dbItGe == null)
+                    {
+                        dbItGe = new ItemGuiaEntrada { Id = guid };
+                        _context.ItensGuiaEntrada.Add(dbItGe);
+                    }
+                    if (item.TryGetProperty("codigo", out var codItGe)) dbItGe.Codigo = codItGe.GetString() ?? ("IGE-" + guid.ToString()[..4].ToUpper());
+                    if (item.TryGetProperty("guia_entrada_id", out var geId) && Guid.TryParse(geId.GetString(), out var geG)) dbItGe.GuiaEntradaId = geG;
+                    if (item.TryGetProperty("item_stock_id", out var stkId2) && Guid.TryParse(stkId2.GetString(), out var stkG2)) dbItGe.ItemStockId = stkG2;
+                    if (item.TryGetProperty("quantidade", out var qtdItGe)) dbItGe.Quantidade = (decimal)qtdItGe.GetDouble();
+                    if (item.TryGetProperty("preco_custo", out var pcItGe)) dbItGe.PrecoCusto = (decimal)pcItGe.GetDouble();
+                }
+            }
+
+            // Itens de Pedidos de Venda
+            if ((payload.TryGetProperty("itens_pedidos_vendas", out var itPvEl) || payload.TryGetProperty("itens_pedido_venda", out itPvEl)) && itPvEl.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var item in itPvEl.EnumerateArray())
+                {
+                    var idStr = item.TryGetProperty("id", out var idProp) ? idProp.GetString() : null;
+                    var guid = ToGuid(idStr, "itpv");
+                    var dbItPv = await _context.ItensPedidoVenda.FirstOrDefaultAsync(ipv => ipv.Id == guid);
+                    if (dbItPv == null)
+                    {
+                        dbItPv = new ItemPedidoVenda { Id = guid };
+                        _context.ItensPedidoVenda.Add(dbItPv);
+                    }
+                    if (item.TryGetProperty("codigo", out var codItPv)) dbItPv.Codigo = codItPv.GetString() ?? ("IPV-" + guid.ToString()[..4].ToUpper());
+                    if (item.TryGetProperty("pedido_id", out var pedId) && Guid.TryParse(pedId.GetString(), out var pedG)) dbItPv.PedidoId = pedG;
+                    if (item.TryGetProperty("produto_id", out var prodId) && Guid.TryParse(prodId.GetString(), out var prodG)) dbItPv.ProdutoId = prodG;
+                    if (item.TryGetProperty("quantidade", out var qtdItPv)) dbItPv.Quantidade = (decimal)qtdItPv.GetDouble();
+                    if (item.TryGetProperty("preco_unitario", out var prItPv)) dbItPv.PrecoUnitario = (decimal)prItPv.GetDouble();
+                }
+            }
+
             await _context.SaveChangesAsync();
             return Ok(new { status = "success", message = "Cadastros sincronizados com a base de dados com sucesso." });
         }
