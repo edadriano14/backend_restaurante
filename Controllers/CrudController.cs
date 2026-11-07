@@ -545,6 +545,49 @@ public class CrudController : ControllerBase
                     await _context.SaveChangesAsync();
                     return Created($"/api/crud/taxas_iva/{taxa.Id}", taxa);
 
+                case "postos_preparacao":
+                    var posto = new PostoPreparacao
+                    {
+                        Id = guid,
+                        EstabelecimentoId = estId,
+                        Codigo = payload.TryGetProperty("codigo", out var _c_ppc) ? _c_ppc.GetString() ?? ("PST-" + guid.ToString()[..4].ToUpper()) : ("PST-" + guid.ToString()[..4].ToUpper()),
+                        Descricao = payload.TryGetProperty("descricao", out var _c_ppd) ? _c_ppd.GetString() ?? (payload.TryGetProperty("nome", out var _c_ppn) ? _c_ppn.GetString() ?? "Posto" : "Posto") : (payload.TryGetProperty("nome", out var _c_ppn2) ? _c_ppn2.GetString() ?? "Posto" : "Posto"),
+                        Ativo = !payload.TryGetProperty("ativo", out var _c_ppa) || _c_ppa.GetBoolean()
+                    };
+                    _context.PostosPreparacao.Add(posto);
+                    await _context.SaveChangesAsync();
+                    return Created($"/api/crud/postos_preparacao/{posto.Id}", posto);
+
+                case "tipos_pedidos":
+                    var tipoPed = new TipoPedido
+                    {
+                        Id = guid,
+                        EstabelecimentoId = estId,
+                        Codigo = payload.TryGetProperty("codigo", out var _c_tpc) ? _c_tpc.GetString() ?? ("TP-" + guid.ToString()[..4].ToUpper()) : ("TP-" + guid.ToString()[..4].ToUpper()),
+                        Descricao = payload.TryGetProperty("descricao", out var _c_tpd) ? _c_tpd.GetString() ?? (payload.TryGetProperty("nome", out var _c_tpn) ? _c_tpn.GetString() ?? "Tipo Pedido" : "Tipo Pedido") : (payload.TryGetProperty("nome", out var _c_tpn2) ? _c_tpn2.GetString() ?? "Tipo Pedido" : "Tipo Pedido"),
+                        Ativo = !payload.TryGetProperty("ativo", out var _c_tpa) || _c_tpa.GetBoolean()
+                    };
+                    _context.TiposPedidos.Add(tipoPed);
+                    await _context.SaveChangesAsync();
+                    return Created($"/api/crud/tipos_pedidos/{tipoPed.Id}", tipoPed);
+
+                case "metodos_pagamento":
+                    var metPag = new MetodoPagamento
+                    {
+                        Id = guid,
+                        EstabelecimentoId = estId,
+                        Codigo = payload.TryGetProperty("codigo", out var _c_mpc) ? _c_mpc.GetString() ?? ("MET-" + guid.ToString()[..4].ToUpper()) : ("MET-" + guid.ToString()[..4].ToUpper()),
+                        Nome = payload.TryGetProperty("nome", out var _c_mpn) ? _c_mpn.GetString() ?? "Pagamento" : "Pagamento",
+                        Icone = payload.TryGetProperty("icone", out var _c_mpi) ? _c_mpi.GetString() ?? "fa-solid fa-money-bill" : "fa-solid fa-money-bill",
+                        TaxaPercentual = payload.TryGetProperty("taxa_percentual", out var _c_mptx) ? (decimal)_c_mptx.GetDouble() : 0,
+                        PermiteTroco = !payload.TryGetProperty("permite_troco", out var _c_mppt) || _c_mppt.GetBoolean(),
+                        Ordem = payload.TryGetProperty("ordem", out var _c_mpo) ? _c_mpo.GetInt32() : 1,
+                        Ativo = !payload.TryGetProperty("ativo", out var _c_mpa) || _c_mpa.GetBoolean()
+                    };
+                    _context.MetodosPagamento.Add(metPag);
+                    await _context.SaveChangesAsync();
+                    return Created($"/api/crud/metodos_pagamento/{metPag.Id}", metPag);
+
                 case "armazens":
                     var armazem = new Armazem
                     {
@@ -978,6 +1021,49 @@ public class CrudController : ControllerBase
                     await _context.SaveChangesAsync();
                     return Ok(taxa);
 
+                case "postos_preparacao":
+                    var posto = await _context.PostosPreparacao.FindAsync(guid);
+                    if (posto == null) return NotFound(new { erro = "Posto de preparação não encontrado." });
+                    if (payload.TryGetProperty("codigo", out var _u_ppc)) posto.Codigo = _u_ppc.GetString() ?? posto.Codigo;
+                    if (payload.TryGetProperty("descricao", out var _u_ppd)) posto.Descricao = _u_ppd.GetString() ?? posto.Descricao;
+                    else if (payload.TryGetProperty("nome", out var _u_ppn)) posto.Descricao = _u_ppn.GetString() ?? posto.Descricao;
+                    if (payload.TryGetProperty("ativo", out var _u_ppa)) posto.Ativo = _u_ppa.GetBoolean();
+                    await _context.SaveChangesAsync();
+                    return Ok(posto);
+
+                case "tipos_pedidos":
+                    var tipoPed = await _context.TiposPedidos.FindAsync(guid);
+                    if (tipoPed == null) return NotFound(new { erro = "Tipo de pedido não encontrado." });
+                    if (payload.TryGetProperty("codigo", out var _u_tpc)) tipoPed.Codigo = _u_tpc.GetString() ?? tipoPed.Codigo;
+                    if (payload.TryGetProperty("descricao", out var _u_tpd)) tipoPed.Descricao = _u_tpd.GetString() ?? tipoPed.Descricao;
+                    else if (payload.TryGetProperty("nome", out var _u_tpn)) tipoPed.Descricao = _u_tpn.GetString() ?? tipoPed.Descricao;
+                    if (payload.TryGetProperty("ativo", out var _u_tpa)) tipoPed.Ativo = _u_tpa.GetBoolean();
+                    await _context.SaveChangesAsync();
+                    return Ok(tipoPed);
+
+                case "metodos_pagamento":
+                    var metPag = await _context.MetodosPagamento.FindAsync(guid);
+                    if (metPag == null) return NotFound(new { erro = "Método de pagamento não encontrado." });
+                    if (payload.TryGetProperty("codigo", out var _u_mpc)) metPag.Codigo = _u_mpc.GetString() ?? metPag.Codigo;
+                    if (payload.TryGetProperty("nome", out var _u_mpn)) metPag.Nome = _u_mpn.GetString() ?? metPag.Nome;
+                    if (payload.TryGetProperty("icone", out var _u_mpi)) metPag.Icone = _u_mpi.GetString() ?? metPag.Icone;
+                    if (payload.TryGetProperty("taxa_percentual", out var _u_mptx)) metPag.TaxaPercentual = (decimal)_u_mptx.GetDouble();
+                    if (payload.TryGetProperty("permite_troco", out var _u_mppt)) metPag.PermiteTroco = _u_mppt.GetBoolean();
+                    if (payload.TryGetProperty("ordem", out var _u_mpo)) metPag.Ordem = _u_mpo.GetInt32();
+                    if (payload.TryGetProperty("ativo", out var _u_mpa)) metPag.Ativo = _u_mpa.GetBoolean();
+                    await _context.SaveChangesAsync();
+                    return Ok(metPag);
+
+                case "acompanhamentos":
+                    var acomp = await _context.Acompanhamentos.FindAsync(guid);
+                    if (acomp == null) return NotFound(new { erro = "Acompanhamento não encontrado." });
+                    if (payload.TryGetProperty("nome", out var _u_acn)) acomp.Nome = _u_acn.GetString() ?? acomp.Nome;
+                    if (payload.TryGetProperty("tipo", out var _u_act)) acomp.TipoSelecao = _u_act.GetString() ?? acomp.TipoSelecao;
+                    if (payload.TryGetProperty("preco_adicional", out var _u_acpa)) acomp.PrecoAdicional = (decimal)_u_acpa.GetDouble();
+                    if (payload.TryGetProperty("disponivel", out var _u_acd)) acomp.Disponivel = _u_acd.GetBoolean();
+                    await _context.SaveChangesAsync();
+                    return Ok(acomp);
+
                 case "armazens":
                     var arm = await _context.Armazens.FindAsync(guid);
                     if (arm == null) return NotFound(new { erro = "Armazém não encontrado." });
@@ -1237,6 +1323,20 @@ public class CrudController : ControllerBase
                     _context.MetodosPagamento.Remove(met);
                     await _context.SaveChangesAsync();
                     return Ok(new { status = "success", message = $"Método '{met.Nome}' eliminado com sucesso." });
+
+                case "postos_preparacao":
+                    var postoDel = await _context.PostosPreparacao.FindAsync(guid);
+                    if (postoDel == null) return NotFound(new { erro = "Posto de preparação não encontrado." });
+                    _context.PostosPreparacao.Remove(postoDel);
+                    await _context.SaveChangesAsync();
+                    return Ok(new { status = "success", message = $"Posto '{postoDel.Descricao}' eliminado com sucesso." });
+
+                case "tipos_pedidos":
+                    var tpDel = await _context.TiposPedidos.FindAsync(guid);
+                    if (tpDel == null) return NotFound(new { erro = "Tipo de pedido não encontrado." });
+                    _context.TiposPedidos.Remove(tpDel);
+                    await _context.SaveChangesAsync();
+                    return Ok(new { status = "success", message = $"Tipo de pedido '{tpDel.Descricao}' eliminado com sucesso." });
 
                 case "armazens":
                     var armDel = await _context.Armazens.FindAsync(guid);
