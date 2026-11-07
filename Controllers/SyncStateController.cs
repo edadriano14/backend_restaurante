@@ -138,6 +138,18 @@ public class SyncStateController : ControllerBase
             var unidades = await _context.UnidadesMedida.AsNoTracking().ToListAsync();
             var metodosPag = await _context.MetodosPagamento.AsNoTracking().ToListAsync();
             var taxasIva = await _context.TaxasIva.AsNoTracking().ToListAsync();
+            var armazens = await _context.Armazens.AsNoTracking().ToListAsync();
+            var locais = await _context.LocaisArmazenamento.AsNoTracking().ToListAsync();
+            var canais = await _context.CanaisPagamento.AsNoTracking().ToListAsync();
+            var categoriasStock = await _context.CategoriasStock.AsNoTracking().ToListAsync();
+            var caixasSessoes = await _context.CaixasSessoes.AsNoTracking().OrderByDescending(c => c.AbertoEm).Take(50).ToListAsync();
+            var compras = await _context.Compras.AsNoTracking().OrderByDescending(c => c.DataCompra).Take(100).ToListAsync();
+            var itensCompra = await _context.ItensCompra.AsNoTracking().Take(500).ToListAsync();
+            var guiasEntrada = await _context.GuiasEntrada.AsNoTracking().OrderByDescending(g => g.DataEmissao).Take(100).ToListAsync();
+            var itensGuia = await _context.ItensGuiaEntrada.AsNoTracking().Take(500).ToListAsync();
+            var pedidosVendas = await _context.PedidosVendas.AsNoTracking().OrderByDescending(p => p.CreatedAt).Take(100).ToListAsync();
+            var itensPedidos = await _context.ItensPedidoVenda.AsNoTracking().Take(500).ToListAsync();
+            var pedidosOnline = await _context.PedidosOnline.AsNoTracking().OrderByDescending(p => p.DataPedido).Take(100).ToListAsync();
 
             return Ok(new
             {
@@ -292,6 +304,141 @@ public class SyncStateController : ControllerBase
                     descricao = t.Descricao,
                     ativo = t.Ativo,
                     padrao = t.Padrao
+                }),
+                armazens = armazens.Select(a => new
+                {
+                    id = a.Id.ToString(),
+                    codigo = a.Codigo,
+                    nome = a.Nome,
+                    tipo = a.Tipo,
+                    ativo = a.Ativo
+                }),
+                locais_armazenamento = locais.Select(l => new
+                {
+                    id = l.Id.ToString(),
+                    armazem_id = l.ArmazemId.ToString(),
+                    tipo_estrutura = l.TipoEstrutura,
+                    codigo = l.Codigo,
+                    descricao = l.Descricao,
+                    ativo = l.Ativo
+                }),
+                canais_pagamento = canais.Select(cp => new
+                {
+                    id = cp.Id.ToString(),
+                    codigo = cp.Codigo,
+                    codigo_operadora = cp.CodigoOperadora,
+                    descricao = cp.Descricao,
+                    numero_associado = cp.NumeroAssociado,
+                    titular_conta = cp.TitularConta,
+                    instrucoes_pagamento = cp.InstrucoesPagamento,
+                    ativo = cp.Ativo
+                }),
+                categorias_stock = categoriasStock.Select(cs => new
+                {
+                    id = cs.Id.ToString(),
+                    codigo = cs.Codigo,
+                    nome = cs.Nome,
+                    descricao = cs.Descricao
+                }),
+                caixas_sessoes = caixasSessoes.Select(cs => new
+                {
+                    id = cs.Id.ToString(),
+                    codigo = cs.Codigo,
+                    utilizador_id = cs.UtilizadorId.ToString(),
+                    saldo_abertura = cs.SaldoAbertura,
+                    saldo_fecho = cs.SaldoFecho,
+                    estado = cs.Estado,
+                    aberto_em = cs.AbertoEm.ToString("s"),
+                    fechado_em = cs.FechadoEm.HasValue ? cs.FechadoEm.Value.ToString("s") : null,
+                    observacoes = cs.Observacoes
+                }),
+                compras = compras.Select(cmp => new
+                {
+                    id = cmp.Id.ToString(),
+                    codigo = cmp.Codigo,
+                    fornecedor_id = cmp.FornecedorId.HasValue ? cmp.FornecedorId.Value.ToString() : null,
+                    numero_fatura = cmp.NumeroFatura,
+                    data_compra = cmp.DataCompra.ToString("s"),
+                    valor_total = cmp.ValorTotal,
+                    status = cmp.Status,
+                    observacoes = cmp.Observacoes
+                }),
+                itens_compra = itensCompra.Select(ic => new
+                {
+                    id = ic.Id.ToString(),
+                    codigo = ic.Codigo,
+                    compra_id = ic.CompraId.ToString(),
+                    item_stock_id = ic.ItemStockId.ToString(),
+                    quantidade = ic.Quantidade,
+                    preco_unitario = ic.PrecoUnitario,
+                    subtotal = ic.Subtotal
+                }),
+                guias_entrada = guiasEntrada.Select(ge => new
+                {
+                    id = ge.Id.ToString(),
+                    codigo = ge.Codigo,
+                    fornecedor_id = ge.FornecedorId.HasValue ? ge.FornecedorId.Value.ToString() : null,
+                    numero_guia = ge.NumeroGuia,
+                    data_emissao = ge.DataEmissao.ToString("s"),
+                    valor_total = ge.ValorTotal,
+                    status = ge.Status,
+                    observacoes = ge.Observacoes
+                }),
+                itens_guia_entrada = itensGuia.Select(ig => new
+                {
+                    id = ig.Id.ToString(),
+                    codigo = ig.Codigo,
+                    guia_entrada_id = ig.GuiaEntradaId.ToString(),
+                    item_stock_id = ig.ItemStockId.ToString(),
+                    quantidade = ig.Quantidade,
+                    preco_custo = ig.PrecoCusto,
+                    subtotal = ig.Subtotal
+                }),
+                pedidos_vendas = pedidosVendas.Select(pv => new
+                {
+                    id = pv.Id.ToString(),
+                    codigo = pv.Codigo,
+                    caixa_sessao_id = pv.CaixaSessaoId.HasValue ? pv.CaixaSessaoId.Value.ToString() : null,
+                    numero_pedido = pv.NumeroPedido,
+                    numero_mesa = pv.NumeroMesa,
+                    cliente_nome = pv.ClienteNome,
+                    cliente_telefone = pv.ClienteTelefone,
+                    tipo_origem = pv.TipoOrigem,
+                    metodo_pagamento = pv.MetodoPagamento,
+                    subtotal = pv.Subtotal,
+                    valor_total = pv.ValorTotal,
+                    estado = pv.Estado,
+                    observacoes = pv.Observacoes,
+                    created_at = pv.CreatedAt.ToString("s")
+                }),
+                itens_pedidos_vendas = itensPedidos.Select(ipv => new
+                {
+                    id = ipv.Id.ToString(),
+                    codigo = ipv.Codigo,
+                    pedido_id = ipv.PedidoId.ToString(),
+                    produto_id = ipv.ProdutoId.ToString(),
+                    quantidade = ipv.Quantidade,
+                    preco_unitario = ipv.PrecoUnitario,
+                    opcoes_selecionadas = ipv.OpcoesSelecionadas,
+                    subtotal = ipv.Subtotal
+                }),
+                pedidos_online = pedidosOnline.Select(po => new
+                {
+                    id = po.Id.ToString(),
+                    codigo = po.Codigo,
+                    numero_pedido = po.NumeroPedido,
+                    cliente_nome = po.ClienteNome,
+                    cliente_telefone = po.ClienteTelefone,
+                    tipo_entrega = po.TipoEntrega,
+                    numero_mesa = po.NumeroMesa,
+                    endereco_entrega = po.EnderecoEntrega,
+                    operadora_pagamento = po.OperadoraPagamento,
+                    referencia_pagamento = po.ReferenciaPagamento,
+                    subtotal = po.Subtotal,
+                    taxa_entrega = po.TaxaEntrega,
+                    total = po.Total,
+                    estado = po.Estado,
+                    data_pedido = po.DataPedido.ToString("s")
                 })
             });
         }
@@ -705,6 +852,242 @@ public class SyncStateController : ControllerBase
                     if (item.TryGetProperty("descricao", out var desc)) dbIva.Descricao = desc.GetString();
                     if (item.TryGetProperty("ativo", out var ativ)) dbIva.Ativo = ativ.GetBoolean();
                     if (item.TryGetProperty("padrao", out var padrao)) dbIva.Padrao = padrao.GetBoolean();
+                }
+            }
+
+            // Unidades de Medida
+            if (payload.TryGetProperty("unidades_medida", out var umEl) && umEl.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var item in umEl.EnumerateArray())
+                {
+                    var idStr = item.TryGetProperty("id", out var idProp) ? idProp.GetString() : null;
+                    var guid = ToGuid(idStr, "um");
+                    var dbUm = await _context.UnidadesMedida.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Id == guid);
+                    if (dbUm == null)
+                    {
+                        dbUm = new UnidadeMedida { Id = guid, EstabelecimentoId = estId };
+                        _context.UnidadesMedida.Add(dbUm);
+                    }
+                    if (item.TryGetProperty("codigo", out var cUm)) dbUm.Codigo = cUm.GetString() ?? ("UN-" + guid.ToString()[..4].ToUpper());
+                    if (item.TryGetProperty("nome", out var nUm)) dbUm.Nome = nUm.GetString() ?? dbUm.Nome;
+                    if (item.TryGetProperty("permite_decimal", out var pdUm)) dbUm.PermiteDecimal = pdUm.GetBoolean();
+                    else if (item.TryGetProperty("permite_fracionamento", out var pfUm)) dbUm.PermiteDecimal = pfUm.GetBoolean();
+                    if (item.TryGetProperty("ativo", out var atUm)) dbUm.Ativo = atUm.GetBoolean();
+                }
+            }
+
+            // Armazéns
+            if (payload.TryGetProperty("armazens", out var armEl) && armEl.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var item in armEl.EnumerateArray())
+                {
+                    var idStr = item.TryGetProperty("id", out var idProp) ? idProp.GetString() : null;
+                    var guid = ToGuid(idStr, "arm");
+                    var dbArm = await _context.Armazens.IgnoreQueryFilters().FirstOrDefaultAsync(a => a.Id == guid);
+                    if (dbArm == null)
+                    {
+                        dbArm = new Armazem { Id = guid, EstabelecimentoId = estId };
+                        _context.Armazens.Add(dbArm);
+                    }
+                    if (item.TryGetProperty("codigo", out var cArm)) dbArm.Codigo = cArm.GetString() ?? ("ARM-" + guid.ToString()[..4].ToUpper());
+                    if (item.TryGetProperty("nome", out var nArm)) dbArm.Nome = nArm.GetString() ?? dbArm.Nome;
+                    if (item.TryGetProperty("tipo", out var tArm)) dbArm.Tipo = tArm.GetString() ?? dbArm.Tipo;
+                    if (item.TryGetProperty("ativo", out var atArm)) dbArm.Ativo = atArm.GetBoolean();
+                }
+            }
+
+            // Locais de Armazenamento
+            if (payload.TryGetProperty("locais_armazenamento", out var locEl) && locEl.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var item in locEl.EnumerateArray())
+                {
+                    var idStr = item.TryGetProperty("id", out var idProp) ? idProp.GetString() : null;
+                    var guid = ToGuid(idStr, "loc");
+                    var dbLoc = await _context.LocaisArmazenamento.FirstOrDefaultAsync(l => l.Id == guid);
+                    if (dbLoc == null)
+                    {
+                        var armId = item.TryGetProperty("armazem_id", out var arid) && Guid.TryParse(arid.GetString(), out var arg) ? arg : estId;
+                        dbLoc = new LocalArmazenamento { Id = guid, ArmazemId = armId };
+                        _context.LocaisArmazenamento.Add(dbLoc);
+                    }
+                    if (item.TryGetProperty("tipo_estrutura", out var teLoc)) dbLoc.TipoEstrutura = teLoc.GetString() ?? dbLoc.TipoEstrutura;
+                    if (item.TryGetProperty("codigo", out var cLoc)) dbLoc.Codigo = cLoc.GetString() ?? ("LOC-" + guid.ToString()[..4].ToUpper());
+                    if (item.TryGetProperty("descricao", out var dLoc)) dbLoc.Descricao = dLoc.GetString();
+                    if (item.TryGetProperty("ativo", out var atLoc)) dbLoc.Ativo = atLoc.GetBoolean();
+                }
+            }
+
+            // Canais de Pagamento
+            if (payload.TryGetProperty("canais_pagamento", out var cpEl) && cpEl.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var item in cpEl.EnumerateArray())
+                {
+                    var idStr = item.TryGetProperty("id", out var idProp) ? idProp.GetString() : null;
+                    var guid = ToGuid(idStr, "cp");
+                    var dbCp = await _context.CanaisPagamento.IgnoreQueryFilters().FirstOrDefaultAsync(c => c.Id == guid);
+                    if (dbCp == null)
+                    {
+                        dbCp = new CanalPagamento { Id = guid, EstabelecimentoId = estId, CreatedAt = DateTime.UtcNow };
+                        _context.CanaisPagamento.Add(dbCp);
+                    }
+                    if (item.TryGetProperty("codigo", out var cCp)) dbCp.Codigo = cCp.GetString() ?? ("CP-" + guid.ToString()[..4].ToUpper());
+                    if (item.TryGetProperty("codigo_operadora", out var coCp)) dbCp.CodigoOperadora = coCp.GetString() ?? dbCp.CodigoOperadora;
+                    if (item.TryGetProperty("descricao", out var dCp)) dbCp.Descricao = dCp.GetString() ?? dbCp.Descricao;
+                    if (item.TryGetProperty("numero_associado", out var nCp)) dbCp.NumeroAssociado = nCp.GetString() ?? dbCp.NumeroAssociado;
+                    if (item.TryGetProperty("titular_conta", out var tcCp)) dbCp.TitularConta = tcCp.GetString();
+                    if (item.TryGetProperty("instrucoes_pagamento", out var ipCp)) dbCp.InstrucoesPagamento = ipCp.GetString();
+                    if (item.TryGetProperty("ativo", out var atCp)) dbCp.Ativo = atCp.GetBoolean();
+                }
+            }
+
+            // Categorias de Stock
+            if (payload.TryGetProperty("categorias_stock", out var cskEl) && cskEl.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var item in cskEl.EnumerateArray())
+                {
+                    var idStr = item.TryGetProperty("id", out var idProp) ? idProp.GetString() : null;
+                    var guid = ToGuid(idStr, "csk");
+                    var dbCsk = await _context.CategoriasStock.IgnoreQueryFilters().FirstOrDefaultAsync(c => c.Id == guid);
+                    if (dbCsk == null)
+                    {
+                        dbCsk = new CategoriaStock { Id = guid, EstabelecimentoId = estId };
+                        _context.CategoriasStock.Add(dbCsk);
+                    }
+                    if (item.TryGetProperty("codigo", out var cCsk)) dbCsk.Codigo = cCsk.GetString() ?? ("CAT-STK-" + guid.ToString()[..4].ToUpper());
+                    if (item.TryGetProperty("nome", out var nCsk)) dbCsk.Nome = nCsk.GetString() ?? dbCsk.Nome;
+                    if (item.TryGetProperty("descricao", out var dCsk)) dbCsk.Descricao = dCsk.GetString();
+                }
+            }
+
+            // Caixas e Sessões
+            if ((payload.TryGetProperty("caixas_sessoes", out var csEl) || payload.TryGetProperty("turnos_caixa", out csEl)) && csEl.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var item in csEl.EnumerateArray())
+                {
+                    var idStr = item.TryGetProperty("id", out var idProp) ? idProp.GetString() : null;
+                    var guid = ToGuid(idStr, "cxs");
+                    var dbCs = await _context.CaixasSessoes.IgnoreQueryFilters().FirstOrDefaultAsync(c => c.Id == guid);
+                    if (dbCs == null)
+                    {
+                        dbCs = new CaixaSessao { Id = guid, EstabelecimentoId = estId, UtilizadorId = estId, AbertoEm = DateTime.UtcNow };
+                        _context.CaixasSessoes.Add(dbCs);
+                    }
+                    if (item.TryGetProperty("codigo", out var cCs)) dbCs.Codigo = cCs.GetString() ?? ("CXS-" + guid.ToString()[..4].ToUpper());
+                    else if (item.TryGetProperty("numero_turno", out var ntCs)) dbCs.Codigo = ntCs.GetString();
+                    if (item.TryGetProperty("saldo_abertura", out var saCs)) dbCs.SaldoAbertura = (decimal)saCs.GetDouble();
+                    else if (item.TryGetProperty("fundo_maneio_inicial", out var fmiCs)) dbCs.SaldoAbertura = (decimal)fmiCs.GetDouble();
+                    if (item.TryGetProperty("saldo_fecho", out var sfCs)) dbCs.SaldoFecho = (decimal)sfCs.GetDouble();
+                    else if (item.TryGetProperty("saldo_contado", out var scCs)) dbCs.SaldoFecho = (decimal)scCs.GetDouble();
+                    if (item.TryGetProperty("estado", out var stCs)) dbCs.Estado = stCs.GetString() ?? dbCs.Estado;
+                    if (item.TryGetProperty("observacoes", out var obsCs)) dbCs.Observacoes = obsCs.GetString();
+                    else if (item.TryGetProperty("justificativa", out var justCs)) dbCs.Observacoes = justCs.GetString();
+                    if (dbCs.Estado == "FECHADO" && dbCs.FechadoEm == null) dbCs.FechadoEm = DateTime.UtcNow;
+                }
+            }
+
+            // Compras
+            if (payload.TryGetProperty("compras", out var cmpEl) && cmpEl.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var item in cmpEl.EnumerateArray())
+                {
+                    var idStr = item.TryGetProperty("id", out var idProp) ? idProp.GetString() : null;
+                    var guid = ToGuid(idStr, "cmp");
+                    var dbCmp = await _context.Compras.IgnoreQueryFilters().FirstOrDefaultAsync(c => c.Id == guid);
+                    if (dbCmp == null)
+                    {
+                        dbCmp = new Compra { Id = guid, EstabelecimentoId = estId, CreatedAt = DateTime.UtcNow };
+                        _context.Compras.Add(dbCmp);
+                    }
+                    if (item.TryGetProperty("codigo", out var cCmp)) dbCmp.Codigo = cCmp.GetString() ?? ("CMP-" + guid.ToString()[..4].ToUpper());
+                    else if (item.TryGetProperty("numero_requisicao", out var nrCmp)) dbCmp.Codigo = nrCmp.GetString();
+                    if (item.TryGetProperty("numero_fatura", out var nfCmp)) dbCmp.NumeroFatura = nfCmp.GetString();
+                    if (item.TryGetProperty("valor_total", out var vtCmp)) dbCmp.ValorTotal = (decimal)vtCmp.GetDouble();
+                    else if (item.TryGetProperty("total", out var totCmp)) dbCmp.ValorTotal = (decimal)totCmp.GetDouble();
+                    if (item.TryGetProperty("status", out var stCmp)) dbCmp.Status = stCmp.GetString() ?? dbCmp.Status;
+                    else if (item.TryGetProperty("estado", out var estCmp)) dbCmp.Status = estCmp.GetString() ?? dbCmp.Status;
+                    if (item.TryGetProperty("observacoes", out var obsCmp)) dbCmp.Observacoes = obsCmp.GetString();
+                }
+            }
+
+            // Guias de Entrada
+            if ((payload.TryGetProperty("guias_entrada", out var geEl) || payload.TryGetProperty("guias", out geEl)) && geEl.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var item in geEl.EnumerateArray())
+                {
+                    var idStr = item.TryGetProperty("id", out var idProp) ? idProp.GetString() : null;
+                    var guid = ToGuid(idStr, "ge");
+                    var dbGe = await _context.GuiasEntrada.IgnoreQueryFilters().FirstOrDefaultAsync(g => g.Id == guid);
+                    if (dbGe == null)
+                    {
+                        dbGe = new GuiaEntrada { Id = guid, EstabelecimentoId = estId, CreatedAt = DateTime.UtcNow };
+                        _context.GuiasEntrada.Add(dbGe);
+                    }
+                    if (item.TryGetProperty("codigo", out var cGe)) dbGe.Codigo = cGe.GetString() ?? ("GE-" + guid.ToString()[..4].ToUpper());
+                    if (item.TryGetProperty("numero_guia", out var ngGe)) dbGe.NumeroGuia = ngGe.GetString() ?? dbGe.NumeroGuia;
+                    else if (item.TryGetProperty("numero", out var numGe)) dbGe.NumeroGuia = numGe.GetString() ?? dbGe.NumeroGuia;
+                    if (item.TryGetProperty("valor_total", out var vtGe)) dbGe.ValorTotal = (decimal)vtGe.GetDouble();
+                    if (item.TryGetProperty("status", out var stGe)) dbGe.Status = stGe.GetString() ?? dbGe.Status;
+                    if (item.TryGetProperty("observacoes", out var obsGe)) dbGe.Observacoes = obsGe.GetString();
+                }
+            }
+
+            // Pedidos de Venda
+            if ((payload.TryGetProperty("pedidos_vendas", out var pvEl) || payload.TryGetProperty("vendas", out pvEl)) && pvEl.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var item in pvEl.EnumerateArray())
+                {
+                    var idStr = item.TryGetProperty("id", out var idProp) ? idProp.GetString() : null;
+                    var guid = ToGuid(idStr, "pv");
+                    var dbPv = await _context.PedidosVendas.IgnoreQueryFilters().FirstOrDefaultAsync(p => p.Id == guid);
+                    if (dbPv == null)
+                    {
+                        dbPv = new PedidoVenda { Id = guid, EstabelecimentoId = estId, CreatedAt = DateTime.UtcNow };
+                        _context.PedidosVendas.Add(dbPv);
+                    }
+                    if (item.TryGetProperty("codigo", out var cPv)) dbPv.Codigo = cPv.GetString() ?? ("PV-" + guid.ToString()[..4].ToUpper());
+                    if (item.TryGetProperty("numero_pedido", out var npPv)) dbPv.NumeroPedido = npPv.GetString() ?? dbPv.NumeroPedido;
+                    else if (item.TryGetProperty("numero", out var numVnd)) dbPv.NumeroPedido = numVnd.GetString() ?? dbPv.NumeroPedido;
+                    if (item.TryGetProperty("cliente_nome", out var cnPv)) dbPv.ClienteNome = cnPv.GetString();
+                    if (item.TryGetProperty("cliente_telefone", out var ctPv)) dbPv.ClienteTelefone = ctPv.GetString();
+                    if (item.TryGetProperty("numero_mesa", out var nmPv)) dbPv.NumeroMesa = nmPv.GetString();
+                    else if (item.TryGetProperty("mesa_local", out var mlPv)) dbPv.NumeroMesa = mlPv.GetString();
+                    if (item.TryGetProperty("metodo_pagamento", out var mpPv)) dbPv.MetodoPagamento = mpPv.GetString() ?? dbPv.MetodoPagamento;
+                    if (item.TryGetProperty("subtotal", out var sbPv)) dbPv.Subtotal = (decimal)sbPv.GetDouble();
+                    else if (item.TryGetProperty("base_tributavel", out var btPv)) dbPv.Subtotal = (decimal)btPv.GetDouble();
+                    if (item.TryGetProperty("valor_total", out var vtPv)) dbPv.ValorTotal = (decimal)vtPv.GetDouble();
+                    else if (item.TryGetProperty("total", out var totVnd)) dbPv.ValorTotal = (decimal)totVnd.GetDouble();
+                    if (item.TryGetProperty("estado", out var stPv)) dbPv.Estado = stPv.GetString() ?? dbPv.Estado;
+                    if (item.TryGetProperty("observacoes", out var obsPv)) dbPv.Observacoes = obsPv.GetString();
+                }
+            }
+
+            // Pedidos Online
+            if (payload.TryGetProperty("pedidos_online", out var poEl) && poEl.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var item in poEl.EnumerateArray())
+                {
+                    var idStr = item.TryGetProperty("id", out var idProp) ? idProp.GetString() : null;
+                    var guid = ToGuid(idStr, "po");
+                    var dbPo = await _context.PedidosOnline.IgnoreQueryFilters().FirstOrDefaultAsync(p => p.Id == guid);
+                    if (dbPo == null)
+                    {
+                        dbPo = new PedidoOnline { Id = guid, EstabelecimentoId = estId, DataPedido = DateTime.UtcNow };
+                        _context.PedidosOnline.Add(dbPo);
+                    }
+                    if (item.TryGetProperty("codigo", out var cPo)) dbPo.Codigo = cPo.GetString() ?? ("POL-" + guid.ToString()[..4].ToUpper());
+                    if (item.TryGetProperty("numero_pedido", out var npPo)) dbPo.NumeroPedido = npPo.GetString() ?? dbPo.NumeroPedido;
+                    if (item.TryGetProperty("cliente_nome", out var cnPo)) dbPo.ClienteNome = cnPo.GetString() ?? dbPo.ClienteNome;
+                    if (item.TryGetProperty("cliente_telefone", out var ctPo)) dbPo.ClienteTelefone = ctPo.GetString() ?? dbPo.ClienteTelefone;
+                    if (item.TryGetProperty("tipo_entrega", out var tePo)) dbPo.TipoEntrega = tePo.GetString() ?? dbPo.TipoEntrega;
+                    if (item.TryGetProperty("numero_mesa", out var nmPo)) dbPo.NumeroMesa = nmPo.GetString();
+                    if (item.TryGetProperty("endereco_entrega", out var eePo)) dbPo.EnderecoEntrega = eePo.GetString();
+                    if (item.TryGetProperty("operadora_pagamento", out var opPo)) dbPo.OperadoraPagamento = opPo.GetString() ?? dbPo.OperadoraPagamento;
+                    if (item.TryGetProperty("referencia_pagamento", out var rpPo)) dbPo.ReferenciaPagamento = rpPo.GetString();
+                    if (item.TryGetProperty("subtotal", out var sbPo)) dbPo.Subtotal = (decimal)sbPo.GetDouble();
+                    if (item.TryGetProperty("total", out var totPo)) dbPo.Total = (decimal)totPo.GetDouble();
+                    if (item.TryGetProperty("estado", out var stPo)) dbPo.Estado = stPo.GetString() ?? dbPo.Estado;
+                    if (item.TryGetProperty("stock_deduzido", out var sdPo)) dbPo.StockDeduzido = sdPo.GetBoolean();
+                    if (item.TryGetProperty("validado_por", out var vpPo)) dbPo.ValidadoPor = vpPo.GetString();
                 }
             }
 

@@ -115,7 +115,22 @@ public class CrudController : ControllerBase
                     return Ok(await _context.Compras.AsNoTracking().OrderByDescending(c => c.DataCompra).Take(100).ToListAsync());
 
                 case "guias_entrada":
+                case "guias_entradas":
                     return Ok(await _context.GuiasEntrada.AsNoTracking().OrderByDescending(g => g.DataEmissao).Take(100).ToListAsync());
+
+                case "canais_pagamento":
+                    return Ok(await _context.CanaisPagamento.AsNoTracking().ToListAsync());
+
+                case "itens_compra":
+                    return Ok(await _context.ItensCompra.AsNoTracking().ToListAsync());
+
+                case "itens_guia_entrada":
+                case "itens_guias_entrada":
+                    return Ok(await _context.ItensGuiaEntrada.AsNoTracking().ToListAsync());
+
+                case "itens_pedidos_vendas":
+                case "itens_pedido_venda":
+                    return Ok(await _context.ItensPedidoVenda.AsNoTracking().ToListAsync());
 
                 default:
                     return NotFound(new { erro = $"Tabela '{tabela}' não encontrada." });
@@ -196,6 +211,63 @@ public class CrudController : ControllerBase
                 case "taxas_iva":
                     var tx = await _context.TaxasIva.FindAsync(guid);
                     return tx != null ? Ok(tx) : NotFound();
+
+                case "armazens":
+                    var arm = await _context.Armazens.FindAsync(guid);
+                    return arm != null ? Ok(arm) : NotFound();
+
+                case "caixas_sessoes":
+                case "caixa_sessoes":
+                    var cs = await _context.CaixasSessoes.FindAsync(guid);
+                    return cs != null ? Ok(cs) : NotFound();
+
+                case "canais_pagamento":
+                    var cpItem = await _context.CanaisPagamento.FindAsync(guid);
+                    return cpItem != null ? Ok(cpItem) : NotFound();
+
+                case "categorias_stock":
+                    var csStock = await _context.CategoriasStock.FindAsync(guid);
+                    return csStock != null ? Ok(csStock) : NotFound();
+
+                case "compras":
+                    var cmp = await _context.Compras.FindAsync(guid);
+                    return cmp != null ? Ok(cmp) : NotFound();
+
+                case "guias_entrada":
+                case "guias_entradas":
+                    var ge = await _context.GuiasEntrada.FindAsync(guid);
+                    return ge != null ? Ok(ge) : NotFound();
+
+                case "itens_compra":
+                    var icmp = await _context.ItensCompra.FindAsync(guid);
+                    return icmp != null ? Ok(icmp) : NotFound();
+
+                case "itens_guia_entrada":
+                case "itens_guias_entrada":
+                    var ige = await _context.ItensGuiaEntrada.FindAsync(guid);
+                    return ige != null ? Ok(ige) : NotFound();
+
+                case "itens_pedidos_vendas":
+                case "itens_pedido_venda":
+                    var ipv = await _context.ItensPedidoVenda.FindAsync(guid);
+                    return ipv != null ? Ok(ipv) : NotFound();
+
+                case "locais_armazenamento":
+                    var loc = await _context.LocaisArmazenamento.FindAsync(guid);
+                    return loc != null ? Ok(loc) : NotFound();
+
+                case "pedidos_online":
+                    var po = await _context.PedidosOnline.FindAsync(guid);
+                    return po != null ? Ok(po) : NotFound();
+
+                case "pedidos_vendas":
+                    var pv = await _context.PedidosVendas.FindAsync(guid);
+                    return pv != null ? Ok(pv) : NotFound();
+
+                case "unidades_medida":
+                case "unidades_medidas":
+                    var um = await _context.UnidadesMedida.FindAsync(guid);
+                    return um != null ? Ok(um) : NotFound();
 
                 default:
                     return NotFound(new { erro = $"Tabela '{tabela}' não encontrada." });
@@ -473,6 +545,241 @@ public class CrudController : ControllerBase
                     await _context.SaveChangesAsync();
                     return Created($"/api/crud/taxas_iva/{taxa.Id}", taxa);
 
+                case "armazens":
+                    var armazem = new Armazem
+                    {
+                        Id = guid,
+                        EstabelecimentoId = estId,
+                        Codigo = payload.TryGetProperty("codigo", out var _c_armCod) ? _c_armCod.GetString() ?? ("ARM-" + guid.ToString()[..4].ToUpper()) : ("ARM-" + guid.ToString()[..4].ToUpper()),
+                        Nome = payload.TryGetProperty("nome", out var _c_armNome) ? _c_armNome.GetString() ?? "Armazém Principal" : "Armazém Principal",
+                        Tipo = payload.TryGetProperty("tipo", out var _c_armTipo) ? _c_armTipo.GetString() ?? "GERAL" : "GERAL",
+                        Ativo = !payload.TryGetProperty("ativo", out var _c_armAt) || _c_armAt.GetBoolean()
+                    };
+                    _context.Armazens.Add(armazem);
+                    await _context.SaveChangesAsync();
+                    return Created($"/api/crud/armazens/{armazem.Id}", armazem);
+
+                case "caixas_sessoes":
+                case "caixa_sessoes":
+                    var caixaSessao = new CaixaSessao
+                    {
+                        Id = guid,
+                        Codigo = payload.TryGetProperty("codigo", out var _c_csCod) ? _c_csCod.GetString() : ("CXS-" + guid.ToString()[..4].ToUpper()),
+                        EstabelecimentoId = estId,
+                        UtilizadorId = payload.TryGetProperty("utilizador_id", out var _c_uid) && Guid.TryParse(_c_uid.GetString(), out var _c_ug) ? _c_ug : estId,
+                        SaldoAbertura = payload.TryGetProperty("saldo_abertura", out var _c_sa) ? (decimal)_c_sa.GetDouble() : 1500.00m,
+                        SaldoFecho = payload.TryGetProperty("saldo_fecho", out var _c_sf) ? (decimal?)_c_sf.GetDouble() : null,
+                        Estado = payload.TryGetProperty("estado", out var _c_stCs) ? _c_stCs.GetString() ?? "ABERTO" : "ABERTO",
+                        AbertoEm = DateTime.UtcNow,
+                        Observacoes = payload.TryGetProperty("observacoes", out var _c_obsCs) ? _c_obsCs.GetString() : null
+                    };
+                    _context.CaixasSessoes.Add(caixaSessao);
+                    await _context.SaveChangesAsync();
+                    return Created($"/api/crud/caixas_sessoes/{caixaSessao.Id}", caixaSessao);
+
+                case "canais_pagamento":
+                    var canal = new CanalPagamento
+                    {
+                        Id = guid,
+                        Codigo = payload.TryGetProperty("codigo", out var _c_cpCod) ? _c_cpCod.GetString() : ("CP-" + guid.ToString()[..4].ToUpper()),
+                        EstabelecimentoId = estId,
+                        CodigoOperadora = payload.TryGetProperty("codigo_operadora", out var _c_co) ? _c_co.GetString() ?? "MPESA" : "MPESA",
+                        Descricao = payload.TryGetProperty("descricao", out var _c_cd) ? _c_cd.GetString() ?? "Conta Móvel" : "Conta Móvel",
+                        NumeroAssociado = payload.TryGetProperty("numero_associado", out var _c_numAssoc) ? _c_numAssoc.GetString() ?? "" : "",
+                        TitularConta = payload.TryGetProperty("titular_conta", out var _c_tc) ? _c_tc.GetString() : null,
+                        InstrucoesPagamento = payload.TryGetProperty("instrucoes_pagamento", out var _c_ip) ? _c_ip.GetString() : null,
+                        Ativo = !payload.TryGetProperty("ativo", out var _c_atCp) || _c_atCp.GetBoolean(),
+                        CreatedAt = DateTime.UtcNow
+                    };
+                    _context.CanaisPagamento.Add(canal);
+                    await _context.SaveChangesAsync();
+                    return Created($"/api/crud/canais_pagamento/{canal.Id}", canal);
+
+                case "categorias_stock":
+                    var catStock = new CategoriaStock
+                    {
+                        Id = guid,
+                        Codigo = payload.TryGetProperty("codigo", out var _c_cskCod) ? _c_cskCod.GetString() : ("CAT-STK-" + guid.ToString()[..4].ToUpper()),
+                        EstabelecimentoId = estId,
+                        Nome = payload.TryGetProperty("nome", out var _c_cskNome) ? _c_cskNome.GetString() ?? "Geral" : "Geral",
+                        Descricao = payload.TryGetProperty("descricao", out var _c_cskDesc) ? _c_cskDesc.GetString() : null
+                    };
+                    _context.CategoriasStock.Add(catStock);
+                    await _context.SaveChangesAsync();
+                    return Created($"/api/crud/categorias_stock/{catStock.Id}", catStock);
+
+                case "compras":
+                    var compra = new Compra
+                    {
+                        Id = guid,
+                        Codigo = payload.TryGetProperty("codigo", out var _c_cmpCod) ? _c_cmpCod.GetString() : ("CMP-" + guid.ToString()[..4].ToUpper()),
+                        EstabelecimentoId = estId,
+                        FornecedorId = payload.TryGetProperty("fornecedor_id", out var _c_fid) && Guid.TryParse(_c_fid.GetString(), out var _c_fg) ? _c_fg : null,
+                        NumeroFatura = payload.TryGetProperty("numero_fatura", out var _c_nf) ? _c_nf.GetString() : null,
+                        DataCompra = DateTime.UtcNow,
+                        ValorTotal = payload.TryGetProperty("valor_total", out var _c_vt) ? (decimal)_c_vt.GetDouble() : 0,
+                        Status = payload.TryGetProperty("status", out var _c_stCmp) ? _c_stCmp.GetString() ?? "CONCLUIDA" : "CONCLUIDA",
+                        Observacoes = payload.TryGetProperty("observacoes", out var _c_obsCmp) ? _c_obsCmp.GetString() : null,
+                        CreatedAt = DateTime.UtcNow
+                    };
+                    _context.Compras.Add(compra);
+                    await _context.SaveChangesAsync();
+                    return Created($"/api/crud/compras/{compra.Id}", compra);
+
+                case "guias_entrada":
+                case "guias_entradas":
+                    var guia = new GuiaEntrada
+                    {
+                        Id = guid,
+                        Codigo = payload.TryGetProperty("codigo", out var _c_geCod) ? _c_geCod.GetString() : ("GE-" + guid.ToString()[..4].ToUpper()),
+                        EstabelecimentoId = estId,
+                        FornecedorId = payload.TryGetProperty("fornecedor_id", out var _c_fge) && Guid.TryParse(_c_fge.GetString(), out var _c_fgg) ? _c_fgg : null,
+                        NumeroGuia = payload.TryGetProperty("numero_guia", out var _c_ng) ? _c_ng.GetString() ?? ("GE-" + DateTime.UtcNow.Year) : ("GE-" + DateTime.UtcNow.Year),
+                        DataEmissao = DateTime.UtcNow,
+                        ValorTotal = payload.TryGetProperty("valor_total", out var _c_vtg) ? (decimal)_c_vtg.GetDouble() : 0,
+                        Status = payload.TryGetProperty("status", out var _c_stGe) ? _c_stGe.GetString() ?? "PROCESSADA" : "PROCESSADA",
+                        Observacoes = payload.TryGetProperty("observacoes", out var _c_obsGe) ? _c_obsGe.GetString() : null,
+                        CreatedAt = DateTime.UtcNow
+                    };
+                    _context.GuiasEntrada.Add(guia);
+                    await _context.SaveChangesAsync();
+                    return Created($"/api/crud/guias_entrada/{guia.Id}", guia);
+
+                case "itens_compra":
+                    var itCmp = new ItemCompra
+                    {
+                        Id = guid,
+                        Codigo = payload.TryGetProperty("codigo", out var _c_itcCod) ? _c_itcCod.GetString() : ("ITC-" + guid.ToString()[..4].ToUpper()),
+                        CompraId = payload.TryGetProperty("compra_id", out var _c_cid) && Guid.TryParse(_c_cid.GetString(), out var _c_cg) ? _c_cg : Guid.NewGuid(),
+                        ItemStockId = payload.TryGetProperty("item_stock_id", out var _c_isid) && Guid.TryParse(_c_isid.GetString(), out var _c_isg) ? _c_isg : Guid.NewGuid(),
+                        Quantidade = payload.TryGetProperty("quantidade", out var _c_qtc) ? (decimal)_c_qtc.GetDouble() : 1,
+                        PrecoUnitario = payload.TryGetProperty("preco_unitario", out var _c_puc) ? (decimal)_c_puc.GetDouble() : 0,
+                        Subtotal = payload.TryGetProperty("subtotal", out var _c_sbc) ? (decimal)_c_sbc.GetDouble() : 0
+                    };
+                    _context.ItensCompra.Add(itCmp);
+                    await _context.SaveChangesAsync();
+                    return Created($"/api/crud/itens_compra/{itCmp.Id}", itCmp);
+
+                case "itens_guia_entrada":
+                case "itens_guias_entrada":
+                    var itGe = new ItemGuiaEntrada
+                    {
+                        Id = guid,
+                        Codigo = payload.TryGetProperty("codigo", out var _c_itgCod) ? _c_itgCod.GetString() : ("ITG-" + guid.ToString()[..4].ToUpper()),
+                        GuiaEntradaId = payload.TryGetProperty("guia_entrada_id", out var _c_gid) && Guid.TryParse(_c_gid.GetString(), out var _c_gg) ? _c_gg : Guid.NewGuid(),
+                        ItemStockId = payload.TryGetProperty("item_stock_id", out var _c_igid) && Guid.TryParse(_c_igid.GetString(), out var _c_igg) ? _c_igg : Guid.NewGuid(),
+                        Quantidade = payload.TryGetProperty("quantidade", out var _c_qtg) ? (decimal)_c_qtg.GetDouble() : 1,
+                        PrecoCusto = payload.TryGetProperty("preco_custo", out var _c_pcg) ? (decimal)_c_pcg.GetDouble() : 0,
+                        Subtotal = payload.TryGetProperty("subtotal", out var _c_sbg) ? (decimal)_c_sbg.GetDouble() : 0
+                    };
+                    _context.ItensGuiaEntrada.Add(itGe);
+                    await _context.SaveChangesAsync();
+                    return Created($"/api/crud/itens_guia_entrada/{itGe.Id}", itGe);
+
+                case "itens_pedidos_vendas":
+                case "itens_pedido_venda":
+                    var itPv = new ItemPedidoVenda
+                    {
+                        Id = guid,
+                        Codigo = payload.TryGetProperty("codigo", out var _c_itpvCod) ? _c_itpvCod.GetString() : ("IPV-" + guid.ToString()[..4].ToUpper()),
+                        PedidoId = payload.TryGetProperty("pedido_id", out var _c_pid) && Guid.TryParse(_c_pid.GetString(), out var _c_pg) ? _c_pg : Guid.NewGuid(),
+                        ProdutoId = payload.TryGetProperty("produto_id", out var _c_prid) && Guid.TryParse(_c_prid.GetString(), out var _c_prg) ? _c_prg : Guid.NewGuid(),
+                        Quantidade = payload.TryGetProperty("quantidade", out var _c_qpv) ? (decimal)_c_qpv.GetDouble() : 1,
+                        PrecoUnitario = payload.TryGetProperty("preco_unitario", out var _c_pupv) ? (decimal)_c_pupv.GetDouble() : 0,
+                        OpcoesSelecionadas = payload.TryGetProperty("opcoes_selecionadas", out var _c_ops) ? _c_ops.GetString() : null,
+                        Subtotal = payload.TryGetProperty("subtotal", out var _c_sbpv) ? (decimal)_c_sbpv.GetDouble() : 0
+                    };
+                    _context.ItensPedidoVenda.Add(itPv);
+                    await _context.SaveChangesAsync();
+                    return Created($"/api/crud/itens_pedidos_vendas/{itPv.Id}", itPv);
+
+                case "locais_armazenamento":
+                    var localArm = new LocalArmazenamento
+                    {
+                        Id = guid,
+                        ArmazemId = payload.TryGetProperty("armazem_id", out var _c_arid) && Guid.TryParse(_c_arid.GetString(), out var _c_arg) ? _c_arg : estId,
+                        TipoEstrutura = payload.TryGetProperty("tipo_estrutura", out var _c_te) ? _c_te.GetString() ?? "ESTANTE" : "ESTANTE",
+                        Codigo = payload.TryGetProperty("codigo", out var _c_locCod) ? _c_locCod.GetString() ?? ("LOC-" + guid.ToString()[..4].ToUpper()) : ("LOC-" + guid.ToString()[..4].ToUpper()),
+                        Descricao = payload.TryGetProperty("descricao", out var _c_locDesc) ? _c_locDesc.GetString() : null,
+                        Ativo = !payload.TryGetProperty("ativo", out var _c_atLoc) || _c_atLoc.GetBoolean()
+                    };
+                    _context.LocaisArmazenamento.Add(localArm);
+                    await _context.SaveChangesAsync();
+                    return Created($"/api/crud/locais_armazenamento/{localArm.Id}", localArm);
+
+                case "pedidos_online":
+                    var pedOnline = new PedidoOnline
+                    {
+                        Id = guid,
+                        Codigo = payload.TryGetProperty("codigo", out var _c_poCod) ? _c_poCod.GetString() : ("POL-" + guid.ToString()[..4].ToUpper()),
+                        EstabelecimentoId = estId,
+                        PedidoVendaId = payload.TryGetProperty("pedido_venda_id", out var _c_pvi) && Guid.TryParse(_c_pvi.GetString(), out var _c_pvg) ? _c_pvg : null,
+                        NumeroPedido = payload.TryGetProperty("numero_pedido", out var _c_numPedOnl) ? _c_numPedOnl.GetString() ?? ("POL-" + DateTime.UtcNow.Ticks.ToString()[..6]) : ("POL-" + DateTime.UtcNow.Ticks.ToString()[..6]),
+                        ClienteNome = payload.TryGetProperty("cliente_nome", out var _c_cn) ? _c_cn.GetString() ?? "Cliente Online" : "Cliente Online",
+                        ClienteTelefone = payload.TryGetProperty("cliente_telefone", out var _c_ct) ? _c_ct.GetString() ?? "" : "",
+                        TipoEntrega = payload.TryGetProperty("tipo_entrega", out var _c_tePol) ? _c_tePol.GetString() ?? "DELIVERY" : "DELIVERY",
+                        MesaId = payload.TryGetProperty("mesa_id", out var _c_mid) && Guid.TryParse(_c_mid.GetString(), out var _c_mg) ? _c_mg : null,
+                        NumeroMesa = payload.TryGetProperty("numero_mesa", out var _c_nm) ? _c_nm.GetString() : null,
+                        EnderecoEntrega = payload.TryGetProperty("endereco_entrega", out var _c_ee) ? _c_ee.GetString() : null,
+                        OperadoraPagamento = payload.TryGetProperty("operadora_pagamento", out var _c_op) ? _c_op.GetString() ?? "MPESA" : "MPESA",
+                        ReferenciaPagamento = payload.TryGetProperty("referencia_pagamento", out var _c_rp) ? _c_rp.GetString() : null,
+                        Subtotal = payload.TryGetProperty("subtotal", out var _c_sbpo) ? (decimal)_c_sbpo.GetDouble() : 0,
+                        TaxaEntrega = payload.TryGetProperty("taxa_entrega", out var _c_txpo) ? (decimal)_c_txpo.GetDouble() : 0,
+                        Total = payload.TryGetProperty("total", out var _c_totpo) ? (decimal)_c_totpo.GetDouble() : 0,
+                        Estado = payload.TryGetProperty("estado", out var _c_stpo) ? _c_stpo.GetString() ?? "PENDENTE_VALIDACAO" : "PENDENTE_VALIDACAO",
+                        StockDeduzido = payload.TryGetProperty("stock_deduzido", out var _c_sd) && _c_sd.GetBoolean(),
+                        DataPedido = DateTime.UtcNow,
+                        ValidadoPor = payload.TryGetProperty("validado_por", out var _c_vp) ? _c_vp.GetString() : null,
+                        Observacoes = payload.TryGetProperty("observacoes", out var _c_obspo) ? _c_obspo.GetString() : null
+                    };
+                    _context.PedidosOnline.Add(pedOnline);
+                    await _context.SaveChangesAsync();
+                    return Created($"/api/crud/pedidos_online/{pedOnline.Id}", pedOnline);
+
+                case "pedidos_vendas":
+                    var pedVenda = new PedidoVenda
+                    {
+                        Id = guid,
+                        Codigo = payload.TryGetProperty("codigo", out var _c_pvCod) ? _c_pvCod.GetString() : ("PV-" + guid.ToString()[..4].ToUpper()),
+                        EstabelecimentoId = estId,
+                        CaixaSessaoId = payload.TryGetProperty("caixa_sessao_id", out var _c_csi) && Guid.TryParse(_c_csi.GetString(), out var _c_csg) ? _c_csg : null,
+                        ClienteId = payload.TryGetProperty("cliente_id", out var _c_cliId) && Guid.TryParse(_c_cliId.GetString(), out var _c_clig) ? _c_clig : null,
+                        SalaId = payload.TryGetProperty("sala_id", out var _c_sId) && Guid.TryParse(_c_sId.GetString(), out var _c_sg) ? _c_sg : null,
+                        MesaId = payload.TryGetProperty("mesa_id", out var _c_mId) && Guid.TryParse(_c_mId.GetString(), out var _c_mggg) ? _c_mggg : null,
+                        NumeroMesa = payload.TryGetProperty("numero_mesa", out var _c_numM) ? _c_numM.GetString() : null,
+                        TipoOrigem = payload.TryGetProperty("tipo_origem", out var _c_to) ? _c_to.GetString() ?? "PDV_BALCAO" : "PDV_BALCAO",
+                        NumeroPedido = payload.TryGetProperty("numero_pedido", out var _c_numPed) ? _c_numPed.GetString() ?? ("VND-" + DateTime.UtcNow.Ticks.ToString()[..6]) : ("VND-" + DateTime.UtcNow.Ticks.ToString()[..6]),
+                        ClienteNome = payload.TryGetProperty("cliente_nome", out var _c_cnpv) ? _c_cnpv.GetString() : null,
+                        ClienteTelefone = payload.TryGetProperty("cliente_telefone", out var _c_ctpv) ? _c_ctpv.GetString() : null,
+                        EnderecoEntrega = payload.TryGetProperty("endereco_entrega", out var _c_eepv) ? _c_eepv.GetString() : null,
+                        MetodoPagamento = payload.TryGetProperty("metodo_pagamento", out var _c_mppv) ? _c_mppv.GetString() ?? "DINHEIRO" : "DINHEIRO",
+                        Subtotal = payload.TryGetProperty("subtotal", out var _c_sbpvv) ? (decimal)_c_sbpvv.GetDouble() : 0,
+                        TaxaEntrega = payload.TryGetProperty("taxa_entrega", out var _c_txpv) ? (decimal)_c_txpv.GetDouble() : 0,
+                        Desconto = payload.TryGetProperty("desconto", out var _c_dsc) ? (decimal)_c_dsc.GetDouble() : 0,
+                        ValorTotal = payload.TryGetProperty("valor_total", out var _c_vtpv) ? (decimal)_c_vtpv.GetDouble() : 0,
+                        Estado = payload.TryGetProperty("estado", out var _c_stpv) ? _c_stpv.GetString() ?? "PENDENTE" : "PENDENTE",
+                        Observacoes = payload.TryGetProperty("observacoes", out var _c_obspv) ? _c_obspv.GetString() : null,
+                        CreatedAt = DateTime.UtcNow
+                    };
+                    _context.PedidosVendas.Add(pedVenda);
+                    await _context.SaveChangesAsync();
+                    return Created($"/api/crud/pedidos_vendas/{pedVenda.Id}", pedVenda);
+
+                case "unidades_medida":
+                case "unidades_medidas":
+                    var unid = new UnidadeMedida
+                    {
+                        Id = guid,
+                        EstabelecimentoId = estId,
+                        Codigo = payload.TryGetProperty("codigo", out var _c_uCod) ? _c_uCod.GetString() ?? ("UN-" + guid.ToString()[..4].ToUpper()) : ("UN-" + guid.ToString()[..4].ToUpper()),
+                        Nome = payload.TryGetProperty("nome", out var _c_uNome) ? _c_uNome.GetString() ?? "Unidade" : "Unidade",
+                        PermiteDecimal = payload.TryGetProperty("permite_decimal", out var _c_pdUm) && _c_pdUm.GetBoolean(),
+                        Ativo = !payload.TryGetProperty("ativo", out var _c_atUm) || _c_atUm.GetBoolean()
+                    };
+                    _context.UnidadesMedida.Add(unid);
+                    await _context.SaveChangesAsync();
+                    return Created($"/api/crud/unidades_medida/{unid.Id}", unid);
+
                 default:
                     return NotFound(new { erro = $"Criação para tabela '{tabela}' não implementada." });
             }
@@ -671,6 +978,165 @@ public class CrudController : ControllerBase
                     await _context.SaveChangesAsync();
                     return Ok(taxa);
 
+                case "armazens":
+                    var arm = await _context.Armazens.FindAsync(guid);
+                    if (arm == null) return NotFound(new { erro = "Armazém não encontrado." });
+                    if (payload.TryGetProperty("codigo", out var _u_armC)) arm.Codigo = _u_armC.GetString() ?? arm.Codigo;
+                    if (payload.TryGetProperty("nome", out var _u_armN)) arm.Nome = _u_armN.GetString() ?? arm.Nome;
+                    if (payload.TryGetProperty("tipo", out var _u_armT)) arm.Tipo = _u_armT.GetString() ?? arm.Tipo;
+                    if (payload.TryGetProperty("ativo", out var _u_armA)) arm.Ativo = _u_armA.GetBoolean();
+                    await _context.SaveChangesAsync();
+                    return Ok(arm);
+
+                case "caixas_sessoes":
+                case "caixa_sessoes":
+                    var cs = await _context.CaixasSessoes.FindAsync(guid);
+                    if (cs == null) return NotFound(new { erro = "Sessão de caixa não encontrada." });
+                    if (payload.TryGetProperty("codigo", out var _u_csC)) cs.Codigo = _u_csC.GetString() ?? cs.Codigo;
+                    if (payload.TryGetProperty("saldo_fecho", out var _u_sf)) cs.SaldoFecho = (decimal)_u_sf.GetDouble();
+                    if (payload.TryGetProperty("estado", out var _u_csEst)) cs.Estado = _u_csEst.GetString() ?? cs.Estado;
+                    if (payload.TryGetProperty("observacoes", out var _u_csObs)) cs.Observacoes = _u_csObs.GetString();
+                    if (cs.Estado == "FECHADO" && cs.FechadoEm == null) cs.FechadoEm = DateTime.UtcNow;
+                    await _context.SaveChangesAsync();
+                    return Ok(cs);
+
+                case "canais_pagamento":
+                    var canalPag = await _context.CanaisPagamento.FindAsync(guid);
+                    if (canalPag == null) return NotFound(new { erro = "Canal de pagamento não encontrado." });
+                    if (payload.TryGetProperty("codigo", out var _u_cpC)) canalPag.Codigo = _u_cpC.GetString() ?? canalPag.Codigo;
+                    if (payload.TryGetProperty("codigo_operadora", out var _u_cpOp)) canalPag.CodigoOperadora = _u_cpOp.GetString() ?? canalPag.CodigoOperadora;
+                    if (payload.TryGetProperty("descricao", out var _u_cpD)) canalPag.Descricao = _u_cpD.GetString() ?? canalPag.Descricao;
+                    if (payload.TryGetProperty("numero_associado", out var _u_cpN)) canalPag.NumeroAssociado = _u_cpN.GetString() ?? canalPag.NumeroAssociado;
+                    if (payload.TryGetProperty("titular_conta", out var _u_cpTc)) canalPag.TitularConta = _u_cpTc.GetString();
+                    if (payload.TryGetProperty("instrucoes_pagamento", out var _u_cpIp)) canalPag.InstrucoesPagamento = _u_cpIp.GetString();
+                    if (payload.TryGetProperty("ativo", out var _u_cpAt)) canalPag.Ativo = _u_cpAt.GetBoolean();
+                    await _context.SaveChangesAsync();
+                    return Ok(canalPag);
+
+                case "categorias_stock":
+                    var cstk = await _context.CategoriasStock.FindAsync(guid);
+                    if (cstk == null) return NotFound(new { erro = "Categoria de stock não encontrada." });
+                    if (payload.TryGetProperty("codigo", out var _u_cstkC)) cstk.Codigo = _u_cstkC.GetString() ?? cstk.Codigo;
+                    if (payload.TryGetProperty("nome", out var _u_cstkN)) cstk.Nome = _u_cstkN.GetString() ?? cstk.Nome;
+                    if (payload.TryGetProperty("descricao", out var _u_cstkD)) cstk.Descricao = _u_cstkD.GetString();
+                    await _context.SaveChangesAsync();
+                    return Ok(cstk);
+
+                case "compras":
+                    var cmp = await _context.Compras.FindAsync(guid);
+                    if (cmp == null) return NotFound(new { erro = "Compra não encontrada." });
+                    if (payload.TryGetProperty("codigo", out var _u_cmpC)) cmp.Codigo = _u_cmpC.GetString() ?? cmp.Codigo;
+                    if (payload.TryGetProperty("numero_fatura", out var _u_cmpNf)) cmp.NumeroFatura = _u_cmpNf.GetString();
+                    if (payload.TryGetProperty("valor_total", out var _u_cmpVt)) cmp.ValorTotal = (decimal)_u_cmpVt.GetDouble();
+                    if (payload.TryGetProperty("status", out var _u_cmpSt)) cmp.Status = _u_cmpSt.GetString() ?? cmp.Status;
+                    if (payload.TryGetProperty("observacoes", out var _u_cmpObs)) cmp.Observacoes = _u_cmpObs.GetString();
+                    await _context.SaveChangesAsync();
+                    return Ok(cmp);
+
+                case "guias_entrada":
+                case "guias_entradas":
+                    var ge = await _context.GuiasEntrada.FindAsync(guid);
+                    if (ge == null) return NotFound(new { erro = "Guia de entrada não encontrada." });
+                    if (payload.TryGetProperty("codigo", out var _u_geC)) ge.Codigo = _u_geC.GetString() ?? ge.Codigo;
+                    if (payload.TryGetProperty("numero_guia", out var _u_geNg)) ge.NumeroGuia = _u_geNg.GetString() ?? ge.NumeroGuia;
+                    if (payload.TryGetProperty("valor_total", out var _u_geVt)) ge.ValorTotal = (decimal)_u_geVt.GetDouble();
+                    if (payload.TryGetProperty("status", out var _u_geSt)) ge.Status = _u_geSt.GetString() ?? ge.Status;
+                    if (payload.TryGetProperty("observacoes", out var _u_geObs)) ge.Observacoes = _u_geObs.GetString();
+                    await _context.SaveChangesAsync();
+                    return Ok(ge);
+
+                case "itens_compra":
+                    var icmp = await _context.ItensCompra.FindAsync(guid);
+                    if (icmp == null) return NotFound(new { erro = "Item de compra não encontrado." });
+                    if (payload.TryGetProperty("codigo", out var _u_icC)) icmp.Codigo = _u_icC.GetString() ?? icmp.Codigo;
+                    if (payload.TryGetProperty("quantidade", out var _u_icQ)) icmp.Quantidade = (decimal)_u_icQ.GetDouble();
+                    if (payload.TryGetProperty("preco_unitario", out var _u_icPu)) icmp.PrecoUnitario = (decimal)_u_icPu.GetDouble();
+                    if (payload.TryGetProperty("subtotal", out var _u_icSb)) icmp.Subtotal = (decimal)_u_icSb.GetDouble();
+                    await _context.SaveChangesAsync();
+                    return Ok(icmp);
+
+                case "itens_guia_entrada":
+                case "itens_guias_entrada":
+                    var ige = await _context.ItensGuiaEntrada.FindAsync(guid);
+                    if (ige == null) return NotFound(new { erro = "Item de guia de entrada não encontrado." });
+                    if (payload.TryGetProperty("codigo", out var _u_igC)) ige.Codigo = _u_igC.GetString() ?? ige.Codigo;
+                    if (payload.TryGetProperty("quantidade", out var _u_igQ)) ige.Quantidade = (decimal)_u_igQ.GetDouble();
+                    if (payload.TryGetProperty("preco_custo", out var _u_igPc)) ige.PrecoCusto = (decimal)_u_igPc.GetDouble();
+                    if (payload.TryGetProperty("subtotal", out var _u_igSb)) ige.Subtotal = (decimal)_u_igSb.GetDouble();
+                    await _context.SaveChangesAsync();
+                    return Ok(ige);
+
+                case "itens_pedidos_vendas":
+                case "itens_pedido_venda":
+                    var ipv = await _context.ItensPedidoVenda.FindAsync(guid);
+                    if (ipv == null) return NotFound(new { erro = "Item de pedido de venda não encontrado." });
+                    if (payload.TryGetProperty("codigo", out var _u_ipvC)) ipv.Codigo = _u_ipvC.GetString() ?? ipv.Codigo;
+                    if (payload.TryGetProperty("quantidade", out var _u_ipvQ)) ipv.Quantidade = (decimal)_u_ipvQ.GetDouble();
+                    if (payload.TryGetProperty("preco_unitario", out var _u_ipvPu)) ipv.PrecoUnitario = (decimal)_u_ipvPu.GetDouble();
+                    if (payload.TryGetProperty("opcoes_selecionadas", out var _u_ipvOps)) ipv.OpcoesSelecionadas = _u_ipvOps.GetString();
+                    if (payload.TryGetProperty("subtotal", out var _u_ipvSb)) ipv.Subtotal = (decimal)_u_ipvSb.GetDouble();
+                    await _context.SaveChangesAsync();
+                    return Ok(ipv);
+
+                case "locais_armazenamento":
+                    var loc = await _context.LocaisArmazenamento.FindAsync(guid);
+                    if (loc == null) return NotFound(new { erro = "Local de armazenamento não encontrado." });
+                    if (payload.TryGetProperty("tipo_estrutura", out var _u_locTe)) loc.TipoEstrutura = _u_locTe.GetString() ?? loc.TipoEstrutura;
+                    if (payload.TryGetProperty("codigo", out var _u_locC)) loc.Codigo = _u_locC.GetString() ?? loc.Codigo;
+                    if (payload.TryGetProperty("descricao", out var _u_locD)) loc.Descricao = _u_locD.GetString();
+                    if (payload.TryGetProperty("ativo", out var _u_locAt)) loc.Ativo = _u_locAt.GetBoolean();
+                    await _context.SaveChangesAsync();
+                    return Ok(loc);
+
+                case "pedidos_online":
+                    var po = await _context.PedidosOnline.FindAsync(guid);
+                    if (po == null) return NotFound(new { erro = "Pedido online não encontrado." });
+                    if (payload.TryGetProperty("codigo", out var _u_poC)) po.Codigo = _u_poC.GetString() ?? po.Codigo;
+                    if (payload.TryGetProperty("cliente_nome", out var _u_poCn)) po.ClienteNome = _u_poCn.GetString() ?? po.ClienteNome;
+                    if (payload.TryGetProperty("cliente_telefone", out var _u_poCt)) po.ClienteTelefone = _u_poCt.GetString() ?? po.ClienteTelefone;
+                    if (payload.TryGetProperty("tipo_entrega", out var _u_poTe)) po.TipoEntrega = _u_poTe.GetString() ?? po.TipoEntrega;
+                    if (payload.TryGetProperty("numero_mesa", out var _u_poNm)) po.NumeroMesa = _u_poNm.GetString();
+                    if (payload.TryGetProperty("endereco_entrega", out var _u_poEe)) po.EnderecoEntrega = _u_poEe.GetString();
+                    if (payload.TryGetProperty("operadora_pagamento", out var _u_poOp)) po.OperadoraPagamento = _u_poOp.GetString() ?? po.OperadoraPagamento;
+                    if (payload.TryGetProperty("referencia_pagamento", out var _u_poRp)) po.ReferenciaPagamento = _u_poRp.GetString();
+                    if (payload.TryGetProperty("subtotal", out var _u_poSb)) po.Subtotal = (decimal)_u_poSb.GetDouble();
+                    if (payload.TryGetProperty("taxa_entrega", out var _u_poTx)) po.TaxaEntrega = (decimal)_u_poTx.GetDouble();
+                    if (payload.TryGetProperty("total", out var _u_poTot)) po.Total = (decimal)_u_poTot.GetDouble();
+                    if (payload.TryGetProperty("estado", out var _u_poSt)) po.Estado = _u_poSt.GetString() ?? po.Estado;
+                    if (payload.TryGetProperty("stock_deduzido", out var _u_poSd)) po.StockDeduzido = _u_poSd.GetBoolean();
+                    if (payload.TryGetProperty("validado_por", out var _u_poVp)) po.ValidadoPor = _u_poVp.GetString();
+                    if (payload.TryGetProperty("observacoes", out var _u_poObs)) po.Observacoes = _u_poObs.GetString();
+                    await _context.SaveChangesAsync();
+                    return Ok(po);
+
+                case "pedidos_vendas":
+                    var pv = await _context.PedidosVendas.FindAsync(guid);
+                    if (pv == null) return NotFound(new { erro = "Pedido de venda não encontrado." });
+                    if (payload.TryGetProperty("codigo", out var _u_pvC)) pv.Codigo = _u_pvC.GetString() ?? pv.Codigo;
+                    if (payload.TryGetProperty("numero_mesa", out var _u_pvNm)) pv.NumeroMesa = _u_pvNm.GetString();
+                    if (payload.TryGetProperty("cliente_nome", out var _u_pvCn)) pv.ClienteNome = _u_pvCn.GetString();
+                    if (payload.TryGetProperty("cliente_telefone", out var _u_pvCt)) pv.ClienteTelefone = _u_pvCt.GetString();
+                    if (payload.TryGetProperty("metodo_pagamento", out var _u_pvMp)) pv.MetodoPagamento = _u_pvMp.GetString() ?? pv.MetodoPagamento;
+                    if (payload.TryGetProperty("subtotal", out var _u_pvSb)) pv.Subtotal = (decimal)_u_pvSb.GetDouble();
+                    if (payload.TryGetProperty("taxa_entrega", out var _u_pvTx)) pv.TaxaEntrega = (decimal)_u_pvTx.GetDouble();
+                    if (payload.TryGetProperty("desconto", out var _u_pvDsc)) pv.Desconto = (decimal)_u_pvDsc.GetDouble();
+                    if (payload.TryGetProperty("valor_total", out var _u_pvVt)) pv.ValorTotal = (decimal)_u_pvVt.GetDouble();
+                    if (payload.TryGetProperty("estado", out var _u_pvSt)) pv.Estado = _u_pvSt.GetString() ?? pv.Estado;
+                    if (payload.TryGetProperty("observacoes", out var _u_pvObs)) pv.Observacoes = _u_pvObs.GetString();
+                    await _context.SaveChangesAsync();
+                    return Ok(pv);
+
+                case "unidades_medida":
+                case "unidades_medidas":
+                    var um = await _context.UnidadesMedida.FindAsync(guid);
+                    if (um == null) return NotFound(new { erro = "Unidade de medida não encontrada." });
+                    if (payload.TryGetProperty("codigo", out var _u_umC)) um.Codigo = _u_umC.GetString() ?? um.Codigo;
+                    if (payload.TryGetProperty("nome", out var _u_umN)) um.Nome = _u_umN.GetString() ?? um.Nome;
+                    if (payload.TryGetProperty("permite_decimal", out var _u_umPd)) um.PermiteDecimal = _u_umPd.GetBoolean();
+                    if (payload.TryGetProperty("ativo", out var _u_umAt)) um.Ativo = _u_umAt.GetBoolean();
+                    await _context.SaveChangesAsync();
+                    return Ok(um);
+
                 default:
                     return NotFound(new { erro = $"Atualização para tabela '{tabela}' não implementada." });
             }
@@ -771,6 +1237,102 @@ public class CrudController : ControllerBase
                     _context.MetodosPagamento.Remove(met);
                     await _context.SaveChangesAsync();
                     return Ok(new { status = "success", message = $"Método '{met.Nome}' eliminado com sucesso." });
+
+                case "armazens":
+                    var armDel = await _context.Armazens.FindAsync(guid);
+                    if (armDel == null) return NotFound(new { erro = "Armazém não encontrado." });
+                    _context.Armazens.Remove(armDel);
+                    await _context.SaveChangesAsync();
+                    return Ok(new { status = "success", message = $"Armazém '{armDel.Nome}' eliminado com sucesso." });
+
+                case "caixas_sessoes":
+                case "caixa_sessoes":
+                    var csDel = await _context.CaixasSessoes.FindAsync(guid);
+                    if (csDel == null) return NotFound(new { erro = "Sessão de caixa não encontrada." });
+                    _context.CaixasSessoes.Remove(csDel);
+                    await _context.SaveChangesAsync();
+                    return Ok(new { status = "success", message = "Sessão de caixa eliminada com sucesso." });
+
+                case "canais_pagamento":
+                    var cpDel = await _context.CanaisPagamento.FindAsync(guid);
+                    if (cpDel == null) return NotFound(new { erro = "Canal de pagamento não encontrado." });
+                    _context.CanaisPagamento.Remove(cpDel);
+                    await _context.SaveChangesAsync();
+                    return Ok(new { status = "success", message = $"Canal '{cpDel.Descricao}' eliminado com sucesso." });
+
+                case "categorias_stock":
+                    var cstkDel = await _context.CategoriasStock.FindAsync(guid);
+                    if (cstkDel == null) return NotFound(new { erro = "Categoria de stock não encontrada." });
+                    _context.CategoriasStock.Remove(cstkDel);
+                    await _context.SaveChangesAsync();
+                    return Ok(new { status = "success", message = $"Categoria de stock '{cstkDel.Nome}' eliminada com sucesso." });
+
+                case "compras":
+                    var cmpDel = await _context.Compras.FindAsync(guid);
+                    if (cmpDel == null) return NotFound(new { erro = "Compra não encontrada." });
+                    _context.Compras.Remove(cmpDel);
+                    await _context.SaveChangesAsync();
+                    return Ok(new { status = "success", message = "Compra eliminada com sucesso." });
+
+                case "guias_entrada":
+                case "guias_entradas":
+                    var geDel = await _context.GuiasEntrada.FindAsync(guid);
+                    if (geDel == null) return NotFound(new { erro = "Guia de entrada não encontrada." });
+                    _context.GuiasEntrada.Remove(geDel);
+                    await _context.SaveChangesAsync();
+                    return Ok(new { status = "success", message = $"Guia '{geDel.NumeroGuia}' eliminada com sucesso." });
+
+                case "itens_compra":
+                    var icDel = await _context.ItensCompra.FindAsync(guid);
+                    if (icDel == null) return NotFound(new { erro = "Item de compra não encontrado." });
+                    _context.ItensCompra.Remove(icDel);
+                    await _context.SaveChangesAsync();
+                    return Ok(new { status = "success", message = "Item de compra eliminado com sucesso." });
+
+                case "itens_guia_entrada":
+                case "itens_guias_entrada":
+                    var igDel = await _context.ItensGuiaEntrada.FindAsync(guid);
+                    if (igDel == null) return NotFound(new { erro = "Item de guia não encontrado." });
+                    _context.ItensGuiaEntrada.Remove(igDel);
+                    await _context.SaveChangesAsync();
+                    return Ok(new { status = "success", message = "Item de guia eliminado com sucesso." });
+
+                case "itens_pedidos_vendas":
+                case "itens_pedido_venda":
+                    var ipvDel = await _context.ItensPedidoVenda.FindAsync(guid);
+                    if (ipvDel == null) return NotFound(new { erro = "Item de pedido não encontrado." });
+                    _context.ItensPedidoVenda.Remove(ipvDel);
+                    await _context.SaveChangesAsync();
+                    return Ok(new { status = "success", message = "Item de pedido de venda eliminado com sucesso." });
+
+                case "locais_armazenamento":
+                    var locDel = await _context.LocaisArmazenamento.FindAsync(guid);
+                    if (locDel == null) return NotFound(new { erro = "Local de armazenamento não encontrado." });
+                    _context.LocaisArmazenamento.Remove(locDel);
+                    await _context.SaveChangesAsync();
+                    return Ok(new { status = "success", message = $"Local '{locDel.Descricao ?? locDel.Codigo}' eliminado com sucesso." });
+
+                case "pedidos_online":
+                    var poDel = await _context.PedidosOnline.FindAsync(guid);
+                    if (poDel == null) return NotFound(new { erro = "Pedido online não encontrado." });
+                    _context.PedidosOnline.Remove(poDel);
+                    await _context.SaveChangesAsync();
+                    return Ok(new { status = "success", message = $"Pedido online '{poDel.NumeroPedido}' eliminado com sucesso." });
+
+                case "pedidos_vendas":
+                    var pvDel = await _context.PedidosVendas.FindAsync(guid);
+                    if (pvDel == null) return NotFound(new { erro = "Pedido de venda não encontrado." });
+                    _context.PedidosVendas.Remove(pvDel);
+                    await _context.SaveChangesAsync();
+                    return Ok(new { status = "success", message = $"Pedido de venda '{pvDel.NumeroPedido}' eliminado com sucesso." });
+
+                case "unidades_medida":
+                case "unidades_medidas":
+                    var umDel = await _context.UnidadesMedida.FindAsync(guid);
+                    if (umDel == null) return NotFound(new { erro = "Unidade de medida não encontrada." });
+                    _context.UnidadesMedida.Remove(umDel);
+                    await _context.SaveChangesAsync();
+                    return Ok(new { status = "success", message = $"Unidade de medida '{umDel.Nome}' eliminada com sucesso." });
 
                 default:
                     return NotFound(new { erro = $"Eliminação para tabela '{tabela}' não implementada." });
