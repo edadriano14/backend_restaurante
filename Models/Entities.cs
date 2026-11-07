@@ -19,6 +19,14 @@ public class Estabelecimento
     [Column("nome")]
     public string Nome { get; set; } = string.Empty;
 
+    [MaxLength(200)]
+    [Column("slogan")]
+    public string? Slogan { get; set; }
+
+    [MaxLength(20)]
+    [Column("nuit")]
+    public string? Nuit { get; set; }
+
     [Required]
     [MaxLength(100)]
     [Column("slug")]

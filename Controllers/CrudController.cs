@@ -229,12 +229,13 @@ public class CrudController : ControllerBase
     {
         if (string.IsNullOrWhiteSpace(telefone))
         {
-            return obrigatorio ? "O telefone é obrigatório e deve ter exactamente 10 dígitos." : null;
+            return obrigatorio ? "O telefone é obrigatório." : null;
         }
         var digitos = new string(telefone.Where(char.IsDigit).ToArray());
-        if (digitos.Length != 10)
+        // Suporta telefones locais de 10 dígitos (ex: 8412345678) ou formato internacional de até 14 caracteres/dígitos (ex: +258 84 000 0000)
+        if (digitos.Length < 9 || digitos.Length > 14)
         {
-            return $"O telefone deve conter exactamente 10 dígitos (encontrados {digitos.Length}). Ex: 8412345678.";
+            return $"O telefone deve conter entre 9 e 14 dígitos (encontrados {digitos.Length}). Ex: 8412345678 ou +258 84 000 0000.";
         }
         return null;
     }
