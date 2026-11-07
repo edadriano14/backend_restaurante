@@ -43,7 +43,7 @@ public class CrudController : ControllerBase
                     return Ok(users.Select(u => new
                     {
                         u.Id,
-                        Codigo = "USR-" + u.Id.ToString()[..4],
+                        Codigo = !string.IsNullOrEmpty(u.Codigo) ? u.Codigo : ("USR-" + u.Id.ToString()[..4]),
                         u.Nome,
                         Username = u.Email.Split('@')[0],
                         u.Email,
@@ -209,6 +209,51 @@ public class CrudController : ControllerBase
     }
 
     // =========================================================================
+    // MÉTODOS AUXILIARES DE VALIDAÇÃO (Regras de Negócio Globais)
+    // =========================================================================
+    private static string? ValidarEmail(string? email, bool obrigatorio = false)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            return obrigatorio ? "O email é obrigatório." : null;
+        }
+        email = email.Trim();
+        if (!email.Contains('@') || email.IndexOf('@') == 0 || email.IndexOf('@') == email.Length - 1)
+        {
+            return "Email inválido. Deve conter o caractere '@' e um domínio válido.";
+        }
+        return null;
+    }
+
+    private static string? ValidarTelefone(string? telefone, bool obrigatorio = false)
+    {
+        if (string.IsNullOrWhiteSpace(telefone))
+        {
+            return obrigatorio ? "O telefone é obrigatório e deve ter exactamente 10 dígitos." : null;
+        }
+        var digitos = new string(telefone.Where(char.IsDigit).ToArray());
+        if (digitos.Length != 10)
+        {
+            return $"O telefone deve conter exactamente 10 dígitos (encontrados {digitos.Length}). Ex: 8412345678.";
+        }
+        return null;
+    }
+
+    private static string? ValidarNuit(string? nuit, bool obrigatorio = false)
+    {
+        if (string.IsNullOrWhiteSpace(nuit))
+        {
+            return obrigatorio ? "O NUIT é obrigatório e deve ter exactamente 10 dígitos." : null;
+        }
+        var digitos = new string(nuit.Where(char.IsDigit).ToArray());
+        if (digitos.Length != 10)
+        {
+            return $"O NUIT deve conter exactamente 10 dígitos (encontrados {digitos.Length}). Ex: 4001234567.";
+        }
+        return null;
+    }
+
+    // =========================================================================
     // POST /api/crud/{tabela} -> Cria um novo registo
     // =========================================================================
     [HttpPost("{tabela}")]
@@ -245,12 +290,23 @@ public class CrudController : ControllerBase
                     return Created($"/api/crud/produtos/{prod.Id}", prod);
 
                 case "categorias":
+                    var catNome = payload.TryGetProperty("nome", out var nc) ? nc.GetString()?.Trim() ?? "" : "";
+                    if (string.IsNullOrWhiteSpace(catNome))
+                    {
+                        return BadRequest(new { erro = "O nome da categoria é obrigatório." });
+                    }
+                    // Validação de unicidade do nome da categoria
+                    var existeCat = await _context.Categorias.AsNoTracking().AnyAsync(c => c.Nome.ToLower() == catNome.ToLower());
+                    if (existeCat)
+                    {
+                        return BadRequest(new { erro = $"Já existe uma categoria registada com o nome '{catNome}'." });
+                    }
                     var cat = new Categoria
                     {
                         Id = guid,
                         EstabelecimentoId = estId,
                         Codigo = payload.TryGetProperty("codigo", out var cc) ? cc.GetString() ?? "CAT-01" : "CAT-01",
-                        Nome = payload.TryGetProperty("nome", out var nc) ? nc.GetString() ?? "" : "",
+                        Nome = catNome,
                         Emoji = payload.TryGetProperty("emoji", out var em) ? em.GetString() ?? "🍽️" : "🍽️",
                         Ordem = payload.TryGetProperty("ordem", out var ord) ? ord.GetInt32() : 0,
                         CreatedAt = DateTime.UtcNow
@@ -260,14 +316,27 @@ public class CrudController : ControllerBase
                     return Created($"/api/crud/categorias/{cat.Id}", cat);
 
                 case "clientes":
+                    var cliEmail = payload.TryGetProperty("email", out var ecli) ? ecli.GetString()?.Trim() : null;
+                    var errEmailCli = ValidarEmail(cliEmail, obrigatorio: false);
+                    if (errEmailCli != null) return BadRequest(new { erro = errEmailCli });
+
+                    var cliTel = payload.TryGetProperty("telefone", out var tcli) ? tcli.GetString()?.Trim() : null;
+                    var errTelCli = ValidarTelefone(cliTel, obrigatorio: false);
+                    if (errTelCli != null) return BadRequest(new { erro = errTelCli });
+
+                    var cliNuit = payload.TryGetProperty("nuit", out var n1) ? n1.GetString()?.Trim() : (payload.TryGetProperty("nif", out var n2) ? n2.GetString()?.Trim() : null);
+                    var errNuitCli = ValidarNuit(cliNuit, obrigatorio: false);
+                    if (errNuitCli != null) return BadRequest(new { erro = errNuitCli });
+
                     var cli = new Cliente
                     {
                         Id = guid,
                         EstabelecimentoId = estId,
+                        Codigo = payload.TryGetProperty("codigo", out var codCli) ? codCli.GetString() ?? ("CLI-" + guid.ToString()[..4]) : ("CLI-" + guid.ToString()[..4]),
                         Nome = payload.TryGetProperty("nome", out var ncli) ? ncli.GetString() ?? "" : "",
-                        Telefone = payload.TryGetProperty("telefone", out var tcli) ? tcli.GetString() ?? "" : "",
-                        Email = payload.TryGetProperty("email", out var ecli) ? ecli.GetString() : null,
-                        Nif = payload.TryGetProperty("nuit", out var n1) ? n1.GetString() : (payload.TryGetProperty("nif", out var n2) ? n2.GetString() : null),
+                        Telefone = cliTel ?? "",
+                        Email = cliEmail,
+                        Nif = cliNuit,
                         Morada = payload.TryGetProperty("morada", out var m1) ? m1.GetString() : (payload.TryGetProperty("endereco", out var m2) ? m2.GetString() : null),
                         CreatedAt = DateTime.UtcNow
                     };
@@ -276,14 +345,27 @@ public class CrudController : ControllerBase
                     return Created($"/api/crud/clientes/{cli.Id}", cli);
 
                 case "fornecedores":
+                    var fornEmail = payload.TryGetProperty("email", out var eforn) ? eforn.GetString()?.Trim() : null;
+                    var errEmailForn = ValidarEmail(fornEmail, obrigatorio: false);
+                    if (errEmailForn != null) return BadRequest(new { erro = errEmailForn });
+
+                    var fornTel = payload.TryGetProperty("telefone", out var tforn) ? tforn.GetString()?.Trim() : null;
+                    var errTelForn = ValidarTelefone(fornTel, obrigatorio: false);
+                    if (errTelForn != null) return BadRequest(new { erro = errTelForn });
+
+                    var fornNuit = payload.TryGetProperty("nuit", out var fn1) ? fn1.GetString()?.Trim() : (payload.TryGetProperty("nif", out var fn2) ? fn2.GetString()?.Trim() : null);
+                    var errNuitForn = ValidarNuit(fornNuit, obrigatorio: false);
+                    if (errNuitForn != null) return BadRequest(new { erro = errNuitForn });
+
                     var forn = new Fornecedor
                     {
                         Id = guid,
                         EstabelecimentoId = estId,
+                        Codigo = payload.TryGetProperty("codigo", out var codForn) ? codForn.GetString() ?? ("FORN-" + guid.ToString()[..4]) : ("FORN-" + guid.ToString()[..4]),
                         Nome = payload.TryGetProperty("nome", out var nforn) ? nforn.GetString() ?? "" : "",
-                        Telefone = payload.TryGetProperty("telefone", out var tforn) ? tforn.GetString() : null,
-                        Email = payload.TryGetProperty("email", out var eforn) ? eforn.GetString() : null,
-                        Nif = payload.TryGetProperty("nuit", out var fn1) ? fn1.GetString() : (payload.TryGetProperty("nif", out var fn2) ? fn2.GetString() : null),
+                        Telefone = fornTel,
+                        Email = fornEmail,
+                        Nif = fornNuit,
                         ContactoResponsavel = payload.TryGetProperty("contacto", out var cr) ? cr.GetString() : null,
                         Morada = payload.TryGetProperty("morada", out var mf) ? mf.GetString() : null,
                         CreatedAt = DateTime.UtcNow
@@ -293,12 +375,17 @@ public class CrudController : ControllerBase
                     return Created($"/api/crud/fornecedores/{forn.Id}", forn);
 
                 case "utilizadores":
+                    var userEmail = payload.TryGetProperty("email", out var eu) ? eu.GetString()?.Trim() ?? "" : "";
+                    var errEmailUser = ValidarEmail(userEmail, obrigatorio: true);
+                    if (errEmailUser != null) return BadRequest(new { erro = errEmailUser });
+
                     var user = new Utilizador
                     {
                         Id = guid,
                         EstabelecimentoId = estId,
+                        Codigo = payload.TryGetProperty("codigo", out var codUser) ? codUser.GetString() ?? ("USR-" + guid.ToString()[..4]) : ("USR-" + guid.ToString()[..4]),
                         Nome = payload.TryGetProperty("nome", out var nu) ? nu.GetString() ?? "" : "",
-                        Email = payload.TryGetProperty("email", out var eu) ? eu.GetString() ?? "" : "",
+                        Email = userEmail,
                         Perfil = payload.TryGetProperty("perfil", out var pu) ? pu.GetString() ?? "OPERADOR" : "OPERADOR",
                         Ativo = !payload.TryGetProperty("ativo", out var au) || au.GetBoolean(),
                         SenhaHash = "AQAAAAEAACcQAAAAEJ...",
@@ -427,8 +514,21 @@ public class CrudController : ControllerBase
                 case "categorias":
                     var cat = await _context.Categorias.FindAsync(guid);
                     if (cat == null) return NotFound(new { erro = "Categoria não encontrada." });
+                    if (payload.TryGetProperty("nome", out var nc))
+                    {
+                        var novoNome = nc.GetString()?.Trim() ?? "";
+                        if (string.IsNullOrWhiteSpace(novoNome))
+                        {
+                            return BadRequest(new { erro = "O nome da categoria não pode ficar vazio." });
+                        }
+                        var existeOutra = await _context.Categorias.AsNoTracking().AnyAsync(c => c.Id != guid && c.Nome.ToLower() == novoNome.ToLower());
+                        if (existeOutra)
+                        {
+                            return BadRequest(new { erro = $"Já existe outra categoria registada com o nome '{novoNome}'." });
+                        }
+                        cat.Nome = novoNome;
+                    }
                     if (payload.TryGetProperty("codigo", out var cc)) cat.Codigo = cc.GetString() ?? cat.Codigo;
-                    if (payload.TryGetProperty("nome", out var nc)) cat.Nome = nc.GetString() ?? cat.Nome;
                     if (payload.TryGetProperty("emoji", out var em)) cat.Emoji = em.GetString() ?? cat.Emoji;
                     if (payload.TryGetProperty("ordem", out var ord)) cat.Ordem = ord.GetInt32();
                     await _context.SaveChangesAsync();
@@ -437,11 +537,36 @@ public class CrudController : ControllerBase
                 case "clientes":
                     var cli = await _context.Clientes.FindAsync(guid);
                     if (cli == null) return NotFound(new { erro = "Cliente não encontrado." });
+                    if (payload.TryGetProperty("email", out var ecli))
+                    {
+                        var emailStr = ecli.GetString()?.Trim();
+                        var errEmail = ValidarEmail(emailStr, obrigatorio: false);
+                        if (errEmail != null) return BadRequest(new { erro = errEmail });
+                        cli.Email = emailStr;
+                    }
+                    if (payload.TryGetProperty("telefone", out var tcli))
+                    {
+                        var telStr = tcli.GetString()?.Trim();
+                        var errTel = ValidarTelefone(telStr, obrigatorio: false);
+                        if (errTel != null) return BadRequest(new { erro = errTel });
+                        cli.Telefone = telStr ?? cli.Telefone;
+                    }
+                    if (payload.TryGetProperty("nuit", out var n1))
+                    {
+                        var nuitStr = n1.GetString()?.Trim();
+                        var errNuit = ValidarNuit(nuitStr, obrigatorio: false);
+                        if (errNuit != null) return BadRequest(new { erro = errNuit });
+                        cli.Nif = nuitStr;
+                    }
+                    else if (payload.TryGetProperty("nif", out var n2))
+                    {
+                        var nifStr = n2.GetString()?.Trim();
+                        var errNif = ValidarNuit(nifStr, obrigatorio: false);
+                        if (errNif != null) return BadRequest(new { erro = errNif });
+                        cli.Nif = nifStr;
+                    }
+                    if (payload.TryGetProperty("codigo", out var codCli)) cli.Codigo = codCli.GetString() ?? cli.Codigo;
                     if (payload.TryGetProperty("nome", out var ncli)) cli.Nome = ncli.GetString() ?? cli.Nome;
-                    if (payload.TryGetProperty("telefone", out var tcli)) cli.Telefone = tcli.GetString() ?? cli.Telefone;
-                    if (payload.TryGetProperty("email", out var ecli)) cli.Email = ecli.GetString();
-                    if (payload.TryGetProperty("nuit", out var n1)) cli.Nif = n1.GetString();
-                    else if (payload.TryGetProperty("nif", out var n2)) cli.Nif = n2.GetString();
                     if (payload.TryGetProperty("morada", out var m1)) cli.Morada = m1.GetString();
                     else if (payload.TryGetProperty("endereco", out var m2)) cli.Morada = m2.GetString();
                     await _context.SaveChangesAsync();
@@ -450,11 +575,36 @@ public class CrudController : ControllerBase
                 case "fornecedores":
                     var forn = await _context.Fornecedores.FindAsync(guid);
                     if (forn == null) return NotFound(new { erro = "Fornecedor não encontrado." });
+                    if (payload.TryGetProperty("email", out var eforn))
+                    {
+                        var emailStr = eforn.GetString()?.Trim();
+                        var errEmail = ValidarEmail(emailStr, obrigatorio: false);
+                        if (errEmail != null) return BadRequest(new { erro = errEmail });
+                        forn.Email = emailStr;
+                    }
+                    if (payload.TryGetProperty("telefone", out var tforn))
+                    {
+                        var telStr = tforn.GetString()?.Trim();
+                        var errTel = ValidarTelefone(telStr, obrigatorio: false);
+                        if (errTel != null) return BadRequest(new { erro = errTel });
+                        forn.Telefone = telStr;
+                    }
+                    if (payload.TryGetProperty("nuit", out var fn1))
+                    {
+                        var nuitStr = fn1.GetString()?.Trim();
+                        var errNuit = ValidarNuit(nuitStr, obrigatorio: false);
+                        if (errNuit != null) return BadRequest(new { erro = errNuit });
+                        forn.Nif = nuitStr;
+                    }
+                    else if (payload.TryGetProperty("nif", out var fn2))
+                    {
+                        var nifStr = fn2.GetString()?.Trim();
+                        var errNif = ValidarNuit(nifStr, obrigatorio: false);
+                        if (errNif != null) return BadRequest(new { erro = errNif });
+                        forn.Nif = nifStr;
+                    }
+                    if (payload.TryGetProperty("codigo", out var codForn)) forn.Codigo = codForn.GetString() ?? forn.Codigo;
                     if (payload.TryGetProperty("nome", out var nforn)) forn.Nome = nforn.GetString() ?? forn.Nome;
-                    if (payload.TryGetProperty("telefone", out var tforn)) forn.Telefone = tforn.GetString();
-                    if (payload.TryGetProperty("email", out var eforn)) forn.Email = eforn.GetString();
-                    if (payload.TryGetProperty("nuit", out var fn1)) forn.Nif = fn1.GetString();
-                    else if (payload.TryGetProperty("nif", out var fn2)) forn.Nif = fn2.GetString();
                     if (payload.TryGetProperty("contacto", out var cr)) forn.ContactoResponsavel = cr.GetString();
                     if (payload.TryGetProperty("morada", out var mf)) forn.Morada = mf.GetString();
                     await _context.SaveChangesAsync();
@@ -463,8 +613,15 @@ public class CrudController : ControllerBase
                 case "utilizadores":
                     var user = await _context.Utilizadores.FindAsync(guid);
                     if (user == null) return NotFound(new { erro = "Utilizador não encontrado." });
+                    if (payload.TryGetProperty("email", out var eu))
+                    {
+                        var emailStr = eu.GetString()?.Trim();
+                        var errEmail = ValidarEmail(emailStr, obrigatorio: true);
+                        if (errEmail != null) return BadRequest(new { erro = errEmail });
+                        user.Email = emailStr!;
+                    }
+                    if (payload.TryGetProperty("codigo", out var codUser)) user.Codigo = codUser.GetString() ?? user.Codigo;
                     if (payload.TryGetProperty("nome", out var nu)) user.Nome = nu.GetString() ?? user.Nome;
-                    if (payload.TryGetProperty("email", out var eu)) user.Email = eu.GetString() ?? user.Email;
                     if (payload.TryGetProperty("perfil", out var pu)) user.Perfil = pu.GetString() ?? user.Perfil;
                     if (payload.TryGetProperty("ativo", out var au)) user.Ativo = au.GetBoolean();
                     await _context.SaveChangesAsync();

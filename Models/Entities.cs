@@ -10,6 +10,10 @@ public class Estabelecimento
     [Column("id")]
     public Guid Id { get; set; } = Guid.NewGuid();
 
+    [MaxLength(50)]
+    [Column("codigo")]
+    public string? Codigo { get; set; }
+
     [Required]
     [MaxLength(150)]
     [Column("nome")]
@@ -97,6 +101,10 @@ public class CanalPagamento
     [Column("id")]
     public Guid Id { get; set; } = Guid.NewGuid();
 
+    [MaxLength(50)]
+    [Column("codigo")]
+    public string? Codigo { get; set; }
+
     [Column("estabelecimento_id")]
     public Guid EstabelecimentoId { get; set; }
 
@@ -135,6 +143,10 @@ public class Utilizador
     [Key]
     [Column("id")]
     public Guid Id { get; set; } = Guid.NewGuid();
+
+    [MaxLength(50)]
+    [Column("codigo")]
+    public string? Codigo { get; set; }
 
     [Column("auth_user_id")]
     public Guid? AuthUserId { get; set; }
@@ -177,6 +189,10 @@ public class Fornecedor
     [Column("id")]
     public Guid Id { get; set; } = Guid.NewGuid();
 
+    [MaxLength(50)]
+    [Column("codigo")]
+    public string? Codigo { get; set; }
+
     [Column("estabelecimento_id")]
     public Guid EstabelecimentoId { get; set; }
 
@@ -218,6 +234,10 @@ public class CategoriaStock
     [Column("id")]
     public Guid Id { get; set; } = Guid.NewGuid();
 
+    [MaxLength(50)]
+    [Column("codigo")]
+    public string? Codigo { get; set; }
+
     [Column("estabelecimento_id")]
     public Guid EstabelecimentoId { get; set; }
 
@@ -236,6 +256,10 @@ public class ItemStock
     [Key]
     [Column("id")]
     public Guid Id { get; set; } = Guid.NewGuid();
+
+    [MaxLength(50)]
+    [Column("codigo")]
+    public string? Codigo { get; set; }
 
     [Column("estabelecimento_id")]
     public Guid EstabelecimentoId { get; set; }
@@ -394,6 +418,10 @@ public class Compra
     [Column("id")]
     public Guid Id { get; set; } = Guid.NewGuid();
 
+    [MaxLength(50)]
+    [Column("codigo")]
+    public string? Codigo { get; set; }
+
     [Column("estabelecimento_id")]
     public Guid EstabelecimentoId { get; set; }
 
@@ -433,6 +461,10 @@ public class ItemCompra
     [Column("id")]
     public Guid Id { get; set; } = Guid.NewGuid();
 
+    [MaxLength(50)]
+    [Column("codigo")]
+    public string? Codigo { get; set; }
+
     [Column("compra_id")]
     public Guid CompraId { get; set; }
 
@@ -458,6 +490,10 @@ public class Cliente
     [Key]
     [Column("id")]
     public Guid Id { get; set; } = Guid.NewGuid();
+
+    [MaxLength(50)]
+    [Column("codigo")]
+    public string? Codigo { get; set; }
 
     [Column("estabelecimento_id")]
     public Guid EstabelecimentoId { get; set; }

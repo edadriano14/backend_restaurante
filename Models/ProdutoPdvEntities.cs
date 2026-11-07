@@ -48,6 +48,10 @@ public class Produto
     [Column("id")]
     public Guid Id { get; set; } = Guid.NewGuid();
 
+    [MaxLength(50)]
+    [Column("codigo")]
+    public string? Codigo { get; set; }
+
     [Column("estabelecimento_id")]
     public Guid EstabelecimentoId { get; set; }
 
@@ -128,6 +132,10 @@ public class CaixaSessao
     [Column("id")]
     public Guid Id { get; set; } = Guid.NewGuid();
 
+    [MaxLength(50)]
+    [Column("codigo")]
+    public string? Codigo { get; set; }
+
     [Column("estabelecimento_id")]
     public Guid EstabelecimentoId { get; set; }
 
@@ -160,6 +168,10 @@ public class PedidoVenda
     [Key]
     [Column("id")]
     public Guid Id { get; set; } = Guid.NewGuid();
+
+    [MaxLength(50)]
+    [Column("codigo")]
+    public string? Codigo { get; set; }
 
     [Column("estabelecimento_id")]
     public Guid EstabelecimentoId { get; set; }
@@ -235,6 +247,10 @@ public class ItemPedidoVenda
     [Column("id")]
     public Guid Id { get; set; } = Guid.NewGuid();
 
+    [MaxLength(50)]
+    [Column("codigo")]
+    public string? Codigo { get; set; }
+
     [Column("pedido_id")]
     public Guid PedidoId { get; set; }
 
@@ -263,6 +279,10 @@ public class GuiaEntrada
     [Key]
     [Column("id")]
     public Guid Id { get; set; } = Guid.NewGuid();
+
+    [MaxLength(50)]
+    [Column("codigo")]
+    public string? Codigo { get; set; }
 
     [Column("estabelecimento_id")]
     public Guid EstabelecimentoId { get; set; }
@@ -299,6 +319,10 @@ public class ItemGuiaEntrada
     [Key]
     [Column("id")]
     public Guid Id { get; set; } = Guid.NewGuid();
+
+    [MaxLength(50)]
+    [Column("codigo")]
+    public string? Codigo { get; set; }
 
     [Column("guia_entrada_id")]
     public Guid GuiaEntradaId { get; set; }
@@ -362,6 +386,10 @@ public class Acompanhamento
     [Key]
     [Column("id")]
     public Guid Id { get; set; } = Guid.NewGuid();
+
+    [MaxLength(50)]
+    [Column("codigo")]
+    public string? Codigo { get; set; }
 
     [Column("estabelecimento_id")]
     public Guid EstabelecimentoId { get; set; }
@@ -444,6 +472,10 @@ public class Sala
     [Column("id")]
     public Guid Id { get; set; } = Guid.NewGuid();
 
+    [MaxLength(50)]
+    [Column("codigo")]
+    public string? Codigo { get; set; }
+
     [Column("estabelecimento_id")]
     public Guid EstabelecimentoId { get; set; }
 
@@ -471,6 +503,10 @@ public class Mesa
     [Key]
     [Column("id")]
     public Guid Id { get; set; } = Guid.NewGuid();
+
+    [MaxLength(50)]
+    [Column("codigo")]
+    public string? Codigo { get; set; }
 
     [Column("estabelecimento_id")]
     public Guid EstabelecimentoId { get; set; }
@@ -510,6 +546,10 @@ public class PedidoOnline
     [Key]
     [Column("id")]
     public Guid Id { get; set; } = Guid.NewGuid();
+
+    [MaxLength(50)]
+    [Column("codigo")]
+    public string? Codigo { get; set; }
 
     [Column("estabelecimento_id")]
     public Guid EstabelecimentoId { get; set; }

@@ -372,11 +372,34 @@ public class SyncStateController : ControllerBase
                         _context.Fornecedores.Add(dbForn);
                     }
                     if (item.TryGetProperty("nome", out var nome)) dbForn.Nome = nome.GetString() ?? dbForn.Nome;
-                    if (item.TryGetProperty("nuit", out var nuit)) dbForn.Nif = nuit.GetString() ?? dbForn.Nif;
-                    else if (item.TryGetProperty("nif", out var nif)) dbForn.Nif = nif.GetString() ?? dbForn.Nif;
+                    if (item.TryGetProperty("codigo", out var codForn)) dbForn.Codigo = codForn.GetString() ?? dbForn.Codigo;
+                    if (item.TryGetProperty("nuit", out var nuit))
+                    {
+                        var nStr = nuit.GetString()?.Trim();
+                        var d = new string(nStr?.Where(char.IsDigit).ToArray() ?? Array.Empty<char>());
+                        if (d.Length == 10) dbForn.Nif = d;
+                        else if (!string.IsNullOrEmpty(nStr)) dbForn.Nif = nStr;
+                    }
+                    else if (item.TryGetProperty("nif", out var nif))
+                    {
+                        var nStr = nif.GetString()?.Trim();
+                        var d = new string(nStr?.Where(char.IsDigit).ToArray() ?? Array.Empty<char>());
+                        if (d.Length == 10) dbForn.Nif = d;
+                        else if (!string.IsNullOrEmpty(nStr)) dbForn.Nif = nStr;
+                    }
                     if (item.TryGetProperty("contacto", out var cont)) dbForn.ContactoResponsavel = cont.GetString();
-                    if (item.TryGetProperty("telefone", out var tel)) dbForn.Telefone = tel.GetString();
-                    if (item.TryGetProperty("email", out var email)) dbForn.Email = email.GetString();
+                    if (item.TryGetProperty("telefone", out var tel))
+                    {
+                        var tStr = tel.GetString()?.Trim();
+                        var d = new string(tStr?.Where(char.IsDigit).ToArray() ?? Array.Empty<char>());
+                        if (d.Length == 10) dbForn.Telefone = d;
+                        else if (!string.IsNullOrEmpty(tStr)) dbForn.Telefone = tStr;
+                    }
+                    if (item.TryGetProperty("email", out var email))
+                    {
+                        var eStr = email.GetString()?.Trim();
+                        if (!string.IsNullOrEmpty(eStr) && eStr.Contains('@')) dbForn.Email = eStr;
+                    }
                     if (item.TryGetProperty("morada", out var morada)) dbForn.Morada = morada.GetString();
                 }
             }
@@ -395,10 +418,33 @@ public class SyncStateController : ControllerBase
                         _context.Clientes.Add(dbCli);
                     }
                     if (item.TryGetProperty("nome", out var nome)) dbCli.Nome = nome.GetString() ?? dbCli.Nome;
-                    if (item.TryGetProperty("telefone", out var tel)) dbCli.Telefone = tel.GetString() ?? dbCli.Telefone;
-                    if (item.TryGetProperty("email", out var email)) dbCli.Email = email.GetString();
-                    if (item.TryGetProperty("nuit", out var nuit)) dbCli.Nif = nuit.GetString();
-                    else if (item.TryGetProperty("nif", out var nif)) dbCli.Nif = nif.GetString();
+                    if (item.TryGetProperty("codigo", out var codCli)) dbCli.Codigo = codCli.GetString() ?? dbCli.Codigo;
+                    if (item.TryGetProperty("telefone", out var tel))
+                    {
+                        var tStr = tel.GetString()?.Trim();
+                        var d = new string(tStr?.Where(char.IsDigit).ToArray() ?? Array.Empty<char>());
+                        if (d.Length == 10) dbCli.Telefone = d;
+                        else if (!string.IsNullOrEmpty(tStr)) dbCli.Telefone = tStr;
+                    }
+                    if (item.TryGetProperty("email", out var email))
+                    {
+                        var eStr = email.GetString()?.Trim();
+                        if (!string.IsNullOrEmpty(eStr) && eStr.Contains('@')) dbCli.Email = eStr;
+                    }
+                    if (item.TryGetProperty("nuit", out var nuit))
+                    {
+                        var nStr = nuit.GetString()?.Trim();
+                        var d = new string(nStr?.Where(char.IsDigit).ToArray() ?? Array.Empty<char>());
+                        if (d.Length == 10) dbCli.Nif = d;
+                        else if (!string.IsNullOrEmpty(nStr)) dbCli.Nif = nStr;
+                    }
+                    else if (item.TryGetProperty("nif", out var nif))
+                    {
+                        var nStr = nif.GetString()?.Trim();
+                        var d = new string(nStr?.Where(char.IsDigit).ToArray() ?? Array.Empty<char>());
+                        if (d.Length == 10) dbCli.Nif = d;
+                        else if (!string.IsNullOrEmpty(nStr)) dbCli.Nif = nStr;
+                    }
                     if (item.TryGetProperty("endereco", out var end)) dbCli.Morada = end.GetString();
                     else if (item.TryGetProperty("morada", out var morada)) dbCli.Morada = morada.GetString();
                 }
