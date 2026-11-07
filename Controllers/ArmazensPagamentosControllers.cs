@@ -100,4 +100,30 @@ public class ArmazensController : ControllerBase
         await _context.SaveChangesAsync();
         return CreatedAtAction(nameof(GetAll), new { id = model.Id }, model);
     }
+
+    [HttpPut("{id}")]
+    public async Task<IActionResult> Update(Guid id, Armazem model)
+    {
+        var existing = await _context.Armazens.FindAsync(id);
+        if (existing == null) return NotFound();
+
+        existing.Nome = model.Nome;
+        existing.Codigo = model.Codigo;
+        existing.Tipo = model.Tipo;
+        existing.Ativo = model.Ativo;
+
+        await _context.SaveChangesAsync();
+        return Ok(existing);
+    }
+
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> Delete(Guid id)
+    {
+        var existing = await _context.Armazens.FindAsync(id);
+        if (existing == null) return NotFound();
+
+        _context.Armazens.Remove(existing);
+        await _context.SaveChangesAsync();
+        return NoContent();
+    }
 }
