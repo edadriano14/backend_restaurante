@@ -128,6 +128,23 @@ app.UseAuthentication();
 app.UseMiddleware<TenantMiddleware>();
 app.UseAuthorization();
 
+// Auto-migração resiliente para colunas novas (ex: nuit, slogan em estabelecimentos)
+using (var scope = app.Services.CreateScope())
+{
+    try
+    {
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        await db.Database.ExecuteSqlRawAsync(@"
+            ALTER TABLE estabelecimentos ADD COLUMN IF NOT EXISTS nuit VARCHAR(20);
+            ALTER TABLE estabelecimentos ADD COLUMN IF NOT EXISTS slogan VARCHAR(200);
+        ");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[DB MIGRATION NOTICE] {ex.Message}");
+    }
+}
+
 // Rotas de Raiz e Healthcheck (evita HTTP 404 na raiz https://backend-restaurante.fly.dev/)
 app.MapGet("/", () => Results.Ok(new
 {
