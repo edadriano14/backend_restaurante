@@ -136,13 +136,95 @@ public class SyncStateController : ControllerBase
             var postos = await _context.PostosPreparacao.AsNoTracking().ToListAsync();
             var tiposPedidos = await _context.TiposPedidos.AsNoTracking().ToListAsync();
             var unidades = await _context.UnidadesMedida.AsNoTracking().ToListAsync();
+            if (!unidades.Any())
+            {
+                var estId = estabelecimentos.FirstOrDefault()?.Id ?? ToGuid("1", "est");
+                var umKg = new UnidadeMedida { Id = ToGuid("1", "um"), EstabelecimentoId = estId, Codigo = "KG", Nome = "Quilograma", PermiteDecimal = true };
+                var umLt = new UnidadeMedida { Id = ToGuid("2", "um"), EstabelecimentoId = estId, Codigo = "LT", Nome = "Litro", PermiteDecimal = true };
+                var umUn = new UnidadeMedida { Id = ToGuid("3", "um"), EstabelecimentoId = estId, Codigo = "UN", Nome = "Unidade", PermiteDecimal = false };
+                var umCx = new UnidadeMedida { Id = ToGuid("4", "um"), EstabelecimentoId = estId, Codigo = "CX", Nome = "Caixa", PermiteDecimal = false };
+                var umPct = new UnidadeMedida { Id = ToGuid("5", "um"), EstabelecimentoId = estId, Codigo = "PCT", Nome = "Pacote", PermiteDecimal = false };
+                var umDose = new UnidadeMedida { Id = ToGuid("6", "um"), EstabelecimentoId = estId, Codigo = "DOSE", Nome = "Dose / Porção", PermiteDecimal = false };
+                _context.UnidadesMedida.AddRange(umKg, umLt, umUn, umCx, umPct, umDose);
+                await _context.SaveChangesAsync();
+                unidades = await _context.UnidadesMedida.AsNoTracking().ToListAsync();
+            }
+
             var metodosPag = await _context.MetodosPagamento.AsNoTracking().ToListAsync();
             var taxasIva = await _context.TaxasIva.AsNoTracking().ToListAsync();
+
             var armazens = await _context.Armazens.AsNoTracking().ToListAsync();
+            if (!armazens.Any())
+            {
+                var estId = estabelecimentos.FirstOrDefault()?.Id ?? ToGuid("1", "est");
+                var armP = new Armazem { Id = ToGuid("1", "arm"), EstabelecimentoId = estId, Codigo = "ARM-01", Nome = "Armazém Geral & Secos", Tipo = "CENTRAL", Ativo = true };
+                var armB = new Armazem { Id = ToGuid("2", "arm"), EstabelecimentoId = estId, Codigo = "ARM-02", Nome = "Depósito de Bebidas & Frio", Tipo = "REFRIGERADO", Ativo = true };
+                var armC = new Armazem { Id = ToGuid("3", "arm"), EstabelecimentoId = estId, Codigo = "ARM-03", Nome = "Despensa da Cozinha", Tipo = "COZINHA", Ativo = true };
+                _context.Armazens.AddRange(armP, armB, armC);
+                await _context.SaveChangesAsync();
+                armazens = await _context.Armazens.AsNoTracking().ToListAsync();
+            }
+
             var locais = await _context.LocaisArmazenamento.AsNoTracking().ToListAsync();
+            if (!locais.Any())
+            {
+                var armId1 = armazens.FirstOrDefault()?.Id ?? ToGuid("1", "arm");
+                var armId2 = armazens.Skip(1).FirstOrDefault()?.Id ?? ToGuid("2", "arm");
+                var loc1 = new LocalArmazenamento { Id = ToGuid("1", "loc"), ArmazemId = armId1, Codigo = "EST-A1", Descricao = "Estante A - Prateleira 1 (Cereais & Farinhas)", TipoEstrutura = "ESTANTE", Ativo = true };
+                var loc2 = new LocalArmazenamento { Id = ToGuid("2", "loc"), ArmazemId = armId1, Codigo = "EST-A2", Descricao = "Estante A - Prateleira 2 (Conservas & Óleos)", TipoEstrutura = "ESTANTE", Ativo = true };
+                var loc3 = new LocalArmazenamento { Id = ToGuid("3", "loc"), ArmazemId = armId2, Codigo = "CAM-01", Descricao = "Câmara Frigorífica de Carnes & Aves", TipoEstrutura = "CONGELADOR", Ativo = true };
+                var loc4 = new LocalArmazenamento { Id = ToGuid("4", "loc"), ArmazemId = armId2, Codigo = "GEL-01", Descricao = "Geleira Industrial de Bebidas & Sumos", TipoEstrutura = "GELEIRA", Ativo = true };
+                _context.LocaisArmazenamento.AddRange(loc1, loc2, loc3, loc4);
+                await _context.SaveChangesAsync();
+                locais = await _context.LocaisArmazenamento.AsNoTracking().ToListAsync();
+            }
+
             var canais = await _context.CanaisPagamento.AsNoTracking().ToListAsync();
+            if (!canais.Any())
+            {
+                var estId = estabelecimentos.FirstOrDefault()?.Id ?? ToGuid("1", "est");
+                var cp1 = new CanalPagamento { Id = ToGuid("1", "cp"), EstabelecimentoId = estId, Codigo = "CP-MPESA-01", CodigoOperadora = "MPESA", Descricao = "M-Pesa Restaurante Principal", NumeroAssociado = "840001122", TitularConta = "Sabor & Brasa Lda", InstrucoesPagamento = "Pagar via M-Pesa Balcão", Ativo = true, CreatedAt = DateTime.UtcNow };
+                var cp2 = new CanalPagamento { Id = ToGuid("2", "cp"), EstabelecimentoId = estId, Codigo = "CP-EMOLA-01", CodigoOperadora = "EMOLA", Descricao = "e-Mola Restaurante Principal", NumeroAssociado = "860001122", TitularConta = "Sabor & Brasa Lda", InstrucoesPagamento = "Pagar via e-Mola Moçambique", Ativo = true, CreatedAt = DateTime.UtcNow };
+                var cp3 = new CanalPagamento { Id = ToGuid("3", "cp"), EstabelecimentoId = estId, Codigo = "CP-BIM-POS", CodigoOperadora = "POS", Descricao = "POS Millennium BIM (Cartões)", NumeroAssociado = "POS-BIM-01", TitularConta = "Sabor & Brasa Lda", InstrucoesPagamento = "Cartão de Débito/Crédito", Ativo = true, CreatedAt = DateTime.UtcNow };
+                _context.CanaisPagamento.AddRange(cp1, cp2, cp3);
+                await _context.SaveChangesAsync();
+                canais = await _context.CanaisPagamento.AsNoTracking().ToListAsync();
+            }
+
             var categoriasStock = await _context.CategoriasStock.AsNoTracking().ToListAsync();
+            if (!categoriasStock.Any())
+            {
+                var estId = estabelecimentos.FirstOrDefault()?.Id ?? ToGuid("1", "est");
+                var cs1 = new CategoriaStock { Id = ToGuid("1", "csk"), EstabelecimentoId = estId, Codigo = "CSK-01", Nome = "Carnes, Aves & Peixes", Descricao = "Proteínas e insumos de corte" };
+                var cs2 = new CategoriaStock { Id = ToGuid("2", "csk"), EstabelecimentoId = estId, Codigo = "CSK-02", Nome = "Bebidas & Refrigerantes", Descricao = "Cervejas, refrigerantes, água e licores" };
+                var cs3 = new CategoriaStock { Id = ToGuid("3", "csk"), EstabelecimentoId = estId, Codigo = "CSK-03", Nome = "Secos & Mercearia", Descricao = "Arroz, farinhas, óleos e temperos" };
+                var cs4 = new CategoriaStock { Id = ToGuid("4", "csk"), EstabelecimentoId = estId, Codigo = "CSK-04", Nome = "Hortícolas & Legumes", Descricao = "Produtos frescos da horta" };
+                _context.CategoriasStock.AddRange(cs1, cs2, cs3, cs4);
+                await _context.SaveChangesAsync();
+                categoriasStock = await _context.CategoriasStock.AsNoTracking().ToListAsync();
+            }
+
             var caixasSessoes = await _context.CaixasSessoes.AsNoTracking().OrderByDescending(c => c.AbertoEm).Take(50).ToListAsync();
+            if (!caixasSessoes.Any())
+            {
+                var estId = estabelecimentos.FirstOrDefault()?.Id ?? ToGuid("1", "est");
+                var uId = utilizadores.FirstOrDefault()?.Id ?? ToGuid("1", "usr");
+                var csPadrao = new CaixaSessao
+                {
+                    Id = ToGuid("1", "cs"),
+                    EstabelecimentoId = estId,
+                    UtilizadorId = uId,
+                    Codigo = "CX-001",
+                    SaldoAbertura = 1500.00m,
+                    SaldoFecho = null,
+                    Estado = "ABERTO",
+                    AbertoEm = DateTime.UtcNow.Date.AddHours(8),
+                    Observacoes = "Abertura automática de turno"
+                };
+                _context.CaixasSessoes.Add(csPadrao);
+                await _context.SaveChangesAsync();
+                caixasSessoes = await _context.CaixasSessoes.AsNoTracking().ToListAsync();
+            }
             var compras = await _context.Compras.AsNoTracking().OrderByDescending(c => c.DataCompra).Take(100).ToListAsync();
             var itensCompra = await _context.ItensCompra.AsNoTracking().Take(500).ToListAsync();
             var guiasEntrada = await _context.GuiasEntrada.AsNoTracking().OrderByDescending(g => g.DataEmissao).Take(100).ToListAsync();
