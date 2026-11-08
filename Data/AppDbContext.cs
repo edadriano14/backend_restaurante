@@ -117,5 +117,24 @@ public class AppDbContext : DbContext
 
         modelBuilder.Entity<TaxaIva>()
             .HasQueryFilter(e => _tenantService.EstabelecimentoId == null || e.EstabelecimentoId == _tenantService.EstabelecimentoId);
+
+        // Mapeamento explícito da chave estrangeira de Itens do Pedido de Venda
+        modelBuilder.Entity<PedidoVenda>()
+            .HasMany(p => p.Itens)
+            .WithOne()
+            .HasForeignKey(i => i.PedidoId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<Compra>()
+            .HasMany(c => c.Itens)
+            .WithOne()
+            .HasForeignKey(i => i.CompraId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<GuiaEntrada>()
+            .HasMany(g => g.Itens)
+            .WithOne()
+            .HasForeignKey(i => i.GuiaEntradaId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }
