@@ -355,6 +355,35 @@ public class SyncStateController : ControllerBase
                 itensPedidos = await _context.ItensPedidoVenda.AsNoTracking().ToListAsync();
             }
             var pedidosOnline = await _context.PedidosOnline.AsNoTracking().OrderByDescending(p => p.DataPedido).Take(100).ToListAsync();
+            var tabelaPrecos = await _context.TabelaPrecosFornecedores.AsNoTracking().OrderBy(p => p.ProdutoNome).ToListAsync();
+
+            if (!tabelaPrecos.Any())
+            {
+                var estId = estabelecimentos.FirstOrDefault()?.Id ?? ToGuid("1", "est");
+                var prodPadrao = produtos.FirstOrDefault();
+                var fornPadrao = fornecedores.FirstOrDefault();
+                var tpExemplo = new TabelaPrecoFornecedor
+                {
+                    Id = ToGuid("1", "tpforn"),
+                    EstabelecimentoId = estId,
+                    ProdutoId = prodPadrao?.Id.ToString() ?? "1",
+                    ProdutoNome = prodPadrao?.Nome ?? "Cerveja 2M 330ml",
+                    FornecedorId = fornPadrao?.Id.ToString() ?? "1",
+                    FornecedorNome = fornPadrao?.Nome ?? "Cervejas de Moçambique (CDM)",
+                    CustoAtual = 60.00m,
+                    CustoAtualStock = 60.00m,
+                    PrecoCaixa = 1200.00m,
+                    UnidadesCaixa = 24,
+                    UnidadesPorCaixa = 24,
+                    CustoUnitario = 50.00m,
+                    CustoUnitarioCalculado = 50.00m,
+                    PrecoVendaSugerido = 80.00m,
+                    CreatedAt = DateTime.UtcNow
+                };
+                _context.TabelaPrecosFornecedores.Add(tpExemplo);
+                await _context.SaveChangesAsync();
+                tabelaPrecos.Add(tpExemplo);
+            }
 
             return Ok(new
             {
@@ -644,6 +673,23 @@ public class SyncStateController : ControllerBase
                     total = po.Total,
                     estado = po.Estado,
                     data_pedido = po.DataPedido.ToString("s")
+                }),
+                tabela_precos_fornecedores = tabelaPrecos.Select(tp => new
+                {
+                    id = tp.Id.ToString(),
+                    produto_id = tp.ProdutoId,
+                    produto_nome = tp.ProdutoNome,
+                    fornecedor_id = tp.FornecedorId,
+                    fornecedor_nome = tp.FornecedorNome,
+                    custo_atual = tp.CustoAtual,
+                    custo_atual_stock = tp.CustoAtualStock,
+                    preco_caixa = tp.PrecoCaixa,
+                    unidades_caixa = tp.UnidadesCaixa,
+                    unidades_por_caixa = tp.UnidadesPorCaixa,
+                    custo_unitario = tp.CustoUnitario,
+                    custo_unitario_calculado = tp.CustoUnitarioCalculado,
+                    preco_venda_sugerido = tp.PrecoVendaSugerido,
+                    created_at = tp.CreatedAt.ToString("s")
                 })
             });
         }
@@ -1356,6 +1402,34 @@ public class SyncStateController : ControllerBase
                     if (item.TryGetProperty("produto_id", out var prodId) && Guid.TryParse(prodId.GetString(), out var prodG)) dbItPv.ProdutoId = prodG;
                     if (item.TryGetProperty("quantidade", out var qtdItPv)) dbItPv.Quantidade = (decimal)qtdItPv.GetDouble();
                     if (item.TryGetProperty("preco_unitario", out var prItPv)) dbItPv.PrecoUnitario = (decimal)prItPv.GetDouble();
+                }
+            }
+
+            // Tabela de Preços Fornecedores
+            if ((payload.TryGetProperty("tabela_precos_fornecedores", out var tpEl) || payload.TryGetProperty("tabela_precos", out tpEl)) && tpEl.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var item in tpEl.EnumerateArray())
+                {
+                    var idStr = item.TryGetProperty("id", out var idProp) ? idProp.GetString() : null;
+                    var guid = ToGuid(idStr, "tpforn");
+                    var dbTp = await _context.TabelaPrecosFornecedores.FirstOrDefaultAsync(tp => tp.Id == guid);
+                    if (dbTp == null)
+                    {
+                        dbTp = new TabelaPrecoFornecedor { Id = guid, EstabelecimentoId = estId };
+                        _context.TabelaPrecosFornecedores.Add(dbTp);
+                    }
+                    if (item.TryGetProperty("produto_id", out var pId)) dbTp.ProdutoId = pId.GetString();
+                    if (item.TryGetProperty("produto_nome", out var pNome)) dbTp.ProdutoNome = pNome.GetString() ?? "";
+                    if (item.TryGetProperty("fornecedor_id", out var fId)) dbTp.FornecedorId = fId.GetString();
+                    if (item.TryGetProperty("fornecedor_nome", out var fNome)) dbTp.FornecedorNome = fNome.GetString() ?? "";
+                    if (item.TryGetProperty("custo_atual", out var ca)) dbTp.CustoAtual = (decimal)ca.GetDouble();
+                    if (item.TryGetProperty("custo_atual_stock", out var cas)) dbTp.CustoAtualStock = (decimal)cas.GetDouble();
+                    if (item.TryGetProperty("preco_caixa", out var pc)) dbTp.PrecoCaixa = (decimal)pc.GetDouble();
+                    if (item.TryGetProperty("unidades_caixa", out var uc)) dbTp.UnidadesCaixa = uc.GetInt32();
+                    if (item.TryGetProperty("unidades_por_caixa", out var upc)) dbTp.UnidadesPorCaixa = upc.GetInt32();
+                    if (item.TryGetProperty("custo_unitario", out var cu)) dbTp.CustoUnitario = (decimal)cu.GetDouble();
+                    if (item.TryGetProperty("custo_unitario_calculado", out var cuc)) dbTp.CustoUnitarioCalculado = (decimal)cuc.GetDouble();
+                    if (item.TryGetProperty("preco_venda_sugerido", out var pvs)) dbTp.PrecoVendaSugerido = (decimal)pvs.GetDouble();
                 }
             }
 

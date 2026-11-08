@@ -1,0 +1,6 @@
+{
+  "github-actions.workflows.exclude": [
+    "**/.github/workflows/ci-cd.yml"
+  ]
+}
+

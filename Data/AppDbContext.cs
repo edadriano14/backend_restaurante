@@ -45,6 +45,7 @@ public class AppDbContext : DbContext
     public DbSet<CanalPagamento> CanaisPagamento => Set<CanalPagamento>();
     public DbSet<PedidoOnline> PedidosOnline => Set<PedidoOnline>();
     public DbSet<TaxaIva> TaxasIva => Set<TaxaIva>();
+    public DbSet<TabelaPrecoFornecedor> TabelaPrecosFornecedores => Set<TabelaPrecoFornecedor>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -116,6 +117,9 @@ public class AppDbContext : DbContext
             .HasQueryFilter(e => _tenantService.EstabelecimentoId == null || e.EstabelecimentoId == _tenantService.EstabelecimentoId);
 
         modelBuilder.Entity<TaxaIva>()
+            .HasQueryFilter(e => _tenantService.EstabelecimentoId == null || e.EstabelecimentoId == _tenantService.EstabelecimentoId);
+
+        modelBuilder.Entity<TabelaPrecoFornecedor>()
             .HasQueryFilter(e => _tenantService.EstabelecimentoId == null || e.EstabelecimentoId == _tenantService.EstabelecimentoId);
 
         // Mapeamento explícito da chave estrangeira de Itens do Pedido de Venda

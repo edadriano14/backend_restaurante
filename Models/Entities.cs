@@ -532,3 +532,55 @@ public class Cliente
     [Column("created_at")]
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
+
+[Table("tabela_precos_fornecedores")]
+public class TabelaPrecoFornecedor
+{
+    [Key]
+    [Column("id")]
+    public Guid Id { get; set; } = Guid.NewGuid();
+
+    [Column("estabelecimento_id")]
+    public Guid EstabelecimentoId { get; set; }
+
+    [Column("produto_id")]
+    public string? ProdutoId { get; set; }
+
+    [Column("produto_nome")]
+    [MaxLength(200)]
+    public string ProdutoNome { get; set; } = string.Empty;
+
+    [Column("fornecedor_id")]
+    public string? FornecedorId { get; set; }
+
+    [Column("fornecedor_nome")]
+    [MaxLength(200)]
+    public string FornecedorNome { get; set; } = string.Empty;
+
+    [Column("custo_atual", TypeName = "decimal(18,2)")]
+    public decimal CustoAtual { get; set; } = 0m;
+
+    [Column("custo_atual_stock", TypeName = "decimal(18,2)")]
+    public decimal CustoAtualStock { get; set; } = 0m;
+
+    [Column("preco_caixa", TypeName = "decimal(18,2)")]
+    public decimal PrecoCaixa { get; set; } = 0m;
+
+    [Column("unidades_caixa")]
+    public int UnidadesCaixa { get; set; } = 1;
+
+    [Column("unidades_por_caixa")]
+    public int UnidadesPorCaixa { get; set; } = 1;
+
+    [Column("custo_unitario", TypeName = "decimal(18,2)")]
+    public decimal CustoUnitario { get; set; } = 0m;
+
+    [Column("custo_unitario_calculado", TypeName = "decimal(18,2)")]
+    public decimal CustoUnitarioCalculado { get; set; } = 0m;
+
+    [Column("preco_venda_sugerido", TypeName = "decimal(18,2)")]
+    public decimal PrecoVendaSugerido { get; set; } = 0m;
+
+    [Column("created_at")]
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+}

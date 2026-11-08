@@ -132,6 +132,11 @@ public class CrudController : ControllerBase
                 case "itens_pedido_venda":
                     return Ok(await _context.ItensPedidoVenda.AsNoTracking().ToListAsync());
 
+                case "tabela_precos_fornecedores":
+                case "tabela_precos":
+                case "precos_fornecedores":
+                    return Ok(await _context.TabelaPrecosFornecedores.AsNoTracking().OrderBy(tp => tp.ProdutoNome).ToListAsync());
+
                 default:
                     return NotFound(new { erro = $"Tabela '{tabela}' não encontrada." });
             }
@@ -268,6 +273,12 @@ public class CrudController : ControllerBase
                 case "unidades_medidas":
                     var um = await _context.UnidadesMedida.FindAsync(guid);
                     return um != null ? Ok(um) : NotFound();
+
+                case "tabela_precos_fornecedores":
+                case "tabela_precos":
+                case "precos_fornecedores":
+                    var tpItem = await _context.TabelaPrecosFornecedores.FindAsync(guid);
+                    return tpItem != null ? Ok(tpItem) : NotFound();
 
                 default:
                     return NotFound(new { erro = $"Tabela '{tabela}' não encontrada." });
@@ -823,6 +834,31 @@ public class CrudController : ControllerBase
                     await _context.SaveChangesAsync();
                     return Created($"/api/crud/unidades_medida/{unid.Id}", unid);
 
+                case "tabela_precos_fornecedores":
+                case "tabela_precos":
+                case "precos_fornecedores":
+                    var tpNovo = new TabelaPrecoFornecedor
+                    {
+                        Id = guid,
+                        EstabelecimentoId = estId,
+                        ProdutoId = payload.TryGetProperty("produto_id", out var _c_tppid) ? _c_tppid.GetString() : null,
+                        ProdutoNome = payload.TryGetProperty("produto_nome", out var _c_tppn) ? _c_tppn.GetString() ?? "" : "",
+                        FornecedorId = payload.TryGetProperty("fornecedor_id", out var _c_tpfid) ? _c_tpfid.GetString() : null,
+                        FornecedorNome = payload.TryGetProperty("fornecedor_nome", out var _c_tpfn) ? _c_tpfn.GetString() ?? "" : "",
+                        CustoAtual = payload.TryGetProperty("custo_atual", out var _c_tpca) ? (decimal)_c_tpca.GetDouble() : 0m,
+                        CustoAtualStock = payload.TryGetProperty("custo_atual_stock", out var _c_tpcas) ? (decimal)_c_tpcas.GetDouble() : 0m,
+                        PrecoCaixa = payload.TryGetProperty("preco_caixa", out var _c_tppc) ? (decimal)_c_tppc.GetDouble() : 0m,
+                        UnidadesCaixa = payload.TryGetProperty("unidades_caixa", out var _c_tpuc) ? _c_tpuc.GetInt32() : 1,
+                        UnidadesPorCaixa = payload.TryGetProperty("unidades_por_caixa", out var _c_tpupc) ? _c_tpupc.GetInt32() : 1,
+                        CustoUnitario = payload.TryGetProperty("custo_unitario", out var _c_tpcu) ? (decimal)_c_tpcu.GetDouble() : 0m,
+                        CustoUnitarioCalculado = payload.TryGetProperty("custo_unitario_calculado", out var _c_tpcuc) ? (decimal)_c_tpcuc.GetDouble() : 0m,
+                        PrecoVendaSugerido = payload.TryGetProperty("preco_venda_sugerido", out var _c_tppvs) ? (decimal)_c_tppvs.GetDouble() : 0m,
+                        CreatedAt = DateTime.UtcNow
+                    };
+                    _context.TabelaPrecosFornecedores.Add(tpNovo);
+                    await _context.SaveChangesAsync();
+                    return Created($"/api/crud/tabela_precos_fornecedores/{tpNovo.Id}", tpNovo);
+
                 default:
                     return NotFound(new { erro = $"Criação para tabela '{tabela}' não implementada." });
             }
@@ -1223,6 +1259,26 @@ public class CrudController : ControllerBase
                     await _context.SaveChangesAsync();
                     return Ok(um);
 
+                case "tabela_precos_fornecedores":
+                case "tabela_precos":
+                case "precos_fornecedores":
+                    var tpEdit = await _context.TabelaPrecosFornecedores.FindAsync(guid);
+                    if (tpEdit == null) return NotFound(new { erro = "Registo da tabela de preços não encontrado." });
+                    if (payload.TryGetProperty("produto_id", out var _u_tppid)) tpEdit.ProdutoId = _u_tppid.GetString();
+                    if (payload.TryGetProperty("produto_nome", out var _u_tppn)) tpEdit.ProdutoNome = _u_tppn.GetString() ?? tpEdit.ProdutoNome;
+                    if (payload.TryGetProperty("fornecedor_id", out var _u_tpfid)) tpEdit.FornecedorId = _u_tpfid.GetString();
+                    if (payload.TryGetProperty("fornecedor_nome", out var _u_tpfn)) tpEdit.FornecedorNome = _u_tpfn.GetString() ?? tpEdit.FornecedorNome;
+                    if (payload.TryGetProperty("custo_atual", out var _u_tpca)) tpEdit.CustoAtual = (decimal)_u_tpca.GetDouble();
+                    if (payload.TryGetProperty("custo_atual_stock", out var _u_tpcas)) tpEdit.CustoAtualStock = (decimal)_u_tpcas.GetDouble();
+                    if (payload.TryGetProperty("preco_caixa", out var _u_tppc)) tpEdit.PrecoCaixa = (decimal)_u_tppc.GetDouble();
+                    if (payload.TryGetProperty("unidades_caixa", out var _u_tpuc)) tpEdit.UnidadesCaixa = _u_tpuc.GetInt32();
+                    if (payload.TryGetProperty("unidades_por_caixa", out var _u_tpupc)) tpEdit.UnidadesPorCaixa = _u_tpupc.GetInt32();
+                    if (payload.TryGetProperty("custo_unitario", out var _u_tpcu)) tpEdit.CustoUnitario = (decimal)_u_tpcu.GetDouble();
+                    if (payload.TryGetProperty("custo_unitario_calculado", out var _u_tpcuc)) tpEdit.CustoUnitarioCalculado = (decimal)_u_tpcuc.GetDouble();
+                    if (payload.TryGetProperty("preco_venda_sugerido", out var _u_tppvs)) tpEdit.PrecoVendaSugerido = (decimal)_u_tppvs.GetDouble();
+                    await _context.SaveChangesAsync();
+                    return Ok(tpEdit);
+
                 default:
                     return NotFound(new { erro = $"Atualização para tabela '{tabela}' não implementada." });
             }
@@ -1433,6 +1489,15 @@ public class CrudController : ControllerBase
                     _context.UnidadesMedida.Remove(umDel);
                     await _context.SaveChangesAsync();
                     return Ok(new { status = "success", message = $"Unidade de medida '{umDel.Nome}' eliminada com sucesso." });
+
+                case "tabela_precos_fornecedores":
+                case "tabela_precos":
+                case "precos_fornecedores":
+                    var tpfDel = await _context.TabelaPrecosFornecedores.FindAsync(guid);
+                    if (tpfDel == null) return NotFound(new { erro = "Registo da tabela de preços não encontrado." });
+                    _context.TabelaPrecosFornecedores.Remove(tpfDel);
+                    await _context.SaveChangesAsync();
+                    return Ok(new { status = "success", message = $"Preço de fornecedor '{tpfDel.ProdutoNome}' eliminado com sucesso." });
 
                 default:
                     return NotFound(new { erro = $"Eliminação para tabela '{tabela}' não implementada." });

@@ -137,6 +137,24 @@ using (var scope = app.Services.CreateScope())
         await db.Database.ExecuteSqlRawAsync(@"
             ALTER TABLE estabelecimentos ADD COLUMN IF NOT EXISTS nuit VARCHAR(20);
             ALTER TABLE estabelecimentos ADD COLUMN IF NOT EXISTS slogan VARCHAR(200);
+
+            CREATE TABLE IF NOT EXISTS tabela_precos_fornecedores (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                estabelecimento_id UUID NOT NULL,
+                produto_id TEXT,
+                produto_nome VARCHAR(200) NOT NULL DEFAULT '',
+                fornecedor_id TEXT,
+                fornecedor_nome VARCHAR(200) NOT NULL DEFAULT '',
+                custo_atual NUMERIC(18,2) NOT NULL DEFAULT 0,
+                custo_atual_stock NUMERIC(18,2) NOT NULL DEFAULT 0,
+                preco_caixa NUMERIC(18,2) NOT NULL DEFAULT 0,
+                unidades_caixa INT NOT NULL DEFAULT 1,
+                unidades_por_caixa INT NOT NULL DEFAULT 1,
+                custo_unitario NUMERIC(18,2) NOT NULL DEFAULT 0,
+                custo_unitario_calculado NUMERIC(18,2) NOT NULL DEFAULT 0,
+                preco_venda_sugerido NUMERIC(18,2) NOT NULL DEFAULT 0,
+                created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+            );
         ");
     }
     catch (Exception ex)
