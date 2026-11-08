@@ -138,6 +138,14 @@ using (var scope = app.Services.CreateScope())
             ALTER TABLE estabelecimentos ADD COLUMN IF NOT EXISTS nuit VARCHAR(20);
             ALTER TABLE estabelecimentos ADD COLUMN IF NOT EXISTS slogan VARCHAR(200);
 
+            -- Metadados de busca e filtros salvos para as entidades principais
+            ALTER TABLE produtos ADD COLUMN IF NOT EXISTS search_keywords TEXT;
+            ALTER TABLE compras ADD COLUMN IF NOT EXISTS search_keywords TEXT;
+            ALTER TABLE guias_entrada ADD COLUMN IF NOT EXISTS search_keywords TEXT;
+            ALTER TABLE mesas ADD COLUMN IF NOT EXISTS search_keywords TEXT;
+            ALTER TABLE fornecedores ADD COLUMN IF NOT EXISTS search_keywords TEXT;
+            ALTER TABLE clientes ADD COLUMN IF NOT EXISTS search_keywords TEXT;
+
             CREATE TABLE IF NOT EXISTS tabela_precos_fornecedores (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                 estabelecimento_id UUID NOT NULL,
@@ -153,6 +161,16 @@ using (var scope = app.Services.CreateScope())
                 custo_unitario NUMERIC(18,2) NOT NULL DEFAULT 0,
                 custo_unitario_calculado NUMERIC(18,2) NOT NULL DEFAULT 0,
                 preco_venda_sugerido NUMERIC(18,2) NOT NULL DEFAULT 0,
+                created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+            );
+
+            CREATE TABLE IF NOT EXISTS filtros_pesquisa_salvos (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                estabelecimento_id UUID NOT NULL,
+                utilizador_id UUID,
+                modulo VARCHAR(50) NOT NULL DEFAULT '',
+                nome_filtro VARCHAR(100) NOT NULL DEFAULT '',
+                criterios_json JSONB,
                 created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
             );
         ");
