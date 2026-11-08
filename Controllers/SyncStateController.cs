@@ -227,10 +227,133 @@ public class SyncStateController : ControllerBase
             }
             var compras = await _context.Compras.AsNoTracking().OrderByDescending(c => c.DataCompra).Take(100).ToListAsync();
             var itensCompra = await _context.ItensCompra.AsNoTracking().Take(500).ToListAsync();
+            if (!compras.Any())
+            {
+                var estId = estabelecimentos.FirstOrDefault()?.Id ?? ToGuid("1", "est");
+                var fornId = fornecedores.FirstOrDefault()?.Id;
+                var itemStk = stock.FirstOrDefault();
+                var cmpId = ToGuid("1", "cmp");
+
+                var cmpPadrao = new Compra
+                {
+                    Id = cmpId,
+                    EstabelecimentoId = estId,
+                    FornecedorId = fornId,
+                    Codigo = "CMP-001",
+                    NumeroFatura = "FT-2026/089",
+                    DataCompra = DateTime.UtcNow.AddDays(-2),
+                    ValorTotal = 33750.00m,
+                    Status = "CONCLUIDA",
+                    Observacoes = "Compra inicial de carnes e insumos para abertura"
+                };
+                _context.Compras.Add(cmpPadrao);
+
+                if (itemStk != null)
+                {
+                    var itCmp = new ItemCompra
+                    {
+                        Id = ToGuid("1", "itcmp"),
+                        Codigo = "IC-001",
+                        CompraId = cmpId,
+                        ItemStockId = itemStk.Id,
+                        Quantidade = 45m,
+                        PrecoUnitario = itemStk.CustoUnitario > 0 ? itemStk.CustoUnitario : 750.00m
+                    };
+                    _context.ItensCompra.Add(itCmp);
+                }
+
+                await _context.SaveChangesAsync();
+                compras = await _context.Compras.AsNoTracking().ToListAsync();
+                itensCompra = await _context.ItensCompra.AsNoTracking().ToListAsync();
+            }
+
             var guiasEntrada = await _context.GuiasEntrada.AsNoTracking().OrderByDescending(g => g.DataEmissao).Take(100).ToListAsync();
             var itensGuia = await _context.ItensGuiaEntrada.AsNoTracking().Take(500).ToListAsync();
+            if (!guiasEntrada.Any())
+            {
+                var estId = estabelecimentos.FirstOrDefault()?.Id ?? ToGuid("1", "est");
+                var fornId = fornecedores.FirstOrDefault()?.Id;
+                var itemStk = stock.FirstOrDefault();
+                var geId = ToGuid("1", "ge");
+
+                var gePadrao = new GuiaEntrada
+                {
+                    Id = geId,
+                    EstabelecimentoId = estId,
+                    FornecedorId = fornId,
+                    Codigo = "GE-001",
+                    NumeroGuia = "GE-2026-001",
+                    DataEmissao = DateTime.UtcNow.AddDays(-1),
+                    ValorTotal = 33750.00m,
+                    Status = "PROCESSADA",
+                    Observacoes = "Recepção de mercadorias no armazém central"
+                };
+                _context.GuiasEntrada.Add(gePadrao);
+
+                if (itemStk != null)
+                {
+                    var itGe = new ItemGuiaEntrada
+                    {
+                        Id = ToGuid("1", "itge"),
+                        Codigo = "IGE-001",
+                        GuiaEntradaId = geId,
+                        ItemStockId = itemStk.Id,
+                        Quantidade = 45m,
+                        PrecoCusto = itemStk.CustoUnitario > 0 ? itemStk.CustoUnitario : 750.00m
+                    };
+                    _context.ItensGuiaEntrada.Add(itGe);
+                }
+
+                await _context.SaveChangesAsync();
+                guiasEntrada = await _context.GuiasEntrada.AsNoTracking().ToListAsync();
+                itensGuia = await _context.ItensGuiaEntrada.AsNoTracking().ToListAsync();
+            }
+
             var pedidosVendas = await _context.PedidosVendas.AsNoTracking().OrderByDescending(p => p.CreatedAt).Take(100).ToListAsync();
             var itensPedidos = await _context.ItensPedidoVenda.AsNoTracking().Take(500).ToListAsync();
+            if (!pedidosVendas.Any())
+            {
+                var estId = estabelecimentos.FirstOrDefault()?.Id ?? ToGuid("1", "est");
+                var prod = produtos.FirstOrDefault();
+                var pvId = ToGuid("1", "pv");
+
+                var pvPadrao = new PedidoVenda
+                {
+                    Id = pvId,
+                    EstabelecimentoId = estId,
+                    Codigo = "PV-001",
+                    NumeroPedido = "PED-001",
+                    NumeroMesa = "Mesa 01",
+                    ClienteNome = "Cliente Balcão",
+                    TipoOrigem = "PDV_BALCAO",
+                    MetodoPagamento = "NUMERARIO",
+                    Subtotal = prod != null ? prod.Preco : 1250.00m,
+                    ValorTotal = prod != null ? prod.Preco : 1250.00m,
+                    Estado = "ENTREGUE",
+                    Observacoes = "Venda inicial balcão",
+                    CreatedAt = DateTime.UtcNow.AddHours(-1)
+                };
+                _context.PedidosVendas.Add(pvPadrao);
+
+                if (prod != null)
+                {
+                    var itPv = new ItemPedidoVenda
+                    {
+                        Id = ToGuid("1", "itpv"),
+                        Codigo = "IPV-001",
+                        PedidoId = pvId,
+                        ProdutoId = prod.Id,
+                        Quantidade = 1m,
+                        PrecoUnitario = prod.Preco,
+                        Subtotal = prod.Preco
+                    };
+                    _context.ItensPedidoVenda.Add(itPv);
+                }
+
+                await _context.SaveChangesAsync();
+                pedidosVendas = await _context.PedidosVendas.AsNoTracking().ToListAsync();
+                itensPedidos = await _context.ItensPedidoVenda.AsNoTracking().ToListAsync();
+            }
             var pedidosOnline = await _context.PedidosOnline.AsNoTracking().OrderByDescending(p => p.DataPedido).Take(100).ToListAsync();
 
             return Ok(new
